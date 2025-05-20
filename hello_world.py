@@ -6,6 +6,7 @@ import sys
 
 def main():
     """Main function to print Hello World."""
+    "this is a test comment"
     print("Hello World!")  # noqa: T001
 
 class TestHelloWorld(unittest.TestCase):
