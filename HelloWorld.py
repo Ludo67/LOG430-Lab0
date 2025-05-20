@@ -3,6 +3,7 @@ from io import StringIO
 import sys
 
 def main():
+    t = "t"
     print("Hello World!")
 
 class TestHelloWorld(unittest.TestCase):
