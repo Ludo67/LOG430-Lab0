@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy your Python script into the container
-COPY HelloWorld.py .
+COPY hello_world.py .
 
 # Set the command to run your script
-CMD ["python", "HelloWorld.py"]
+CMD ["python", "hello_world.py"]
