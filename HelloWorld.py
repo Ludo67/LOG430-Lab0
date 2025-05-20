@@ -1,14 +1,18 @@
+"""A simple HelloWorld script with tests."""
+
 import unittest
 from io import StringIO
 import sys
 
 def main():
-    t = 1
-    print("Hello World!")
+    """Main function to print Hello World."""
+    print("Hello World!")  # noqa: T001
 
 class TestHelloWorld(unittest.TestCase):
+    """Unit tests for the HelloWorld script."""
 
     def test_main_prints_hello_world(self):
+        """Test that main prints 'Hello World!'."""
         captured_output = StringIO()
         sys.stdout = captured_output  # Redirect stdout
         main()
@@ -16,6 +20,7 @@ class TestHelloWorld(unittest.TestCase):
         self.assertEqual(captured_output.getvalue().strip(), "Hello World!")
 
     def test_main_does_not_print_empty_string(self):
+        """Test that main does not print an empty string."""
         captured_output = StringIO()
         sys.stdout = captured_output
         main()
