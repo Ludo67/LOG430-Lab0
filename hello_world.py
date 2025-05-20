@@ -1,4 +1,4 @@
-"""A simple HelloWorld application with tests."""
+"""A simple HelloWorld app with tests."""
 
 import unittest
 from io import StringIO
