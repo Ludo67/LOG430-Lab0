@@ -20,5 +20,6 @@ LOG430-Labo/
 ├── HelloWorld.py            # Fichier principal qui imprime "Hello World!"
 ├── test_HelloWorld.py       # Fichier de test unitaire
 ├── Dockerfile               # Fichier docker
+├── docker-compose.yaml      # Fichier pour docker compose
 ├── README.md                # Ce fichier
 └── .gitignore               # (Optionnel) Fichiers à ignorer par Git   
