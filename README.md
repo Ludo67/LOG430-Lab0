@@ -27,20 +27,6 @@ Ce projet simple illustre :
 
 
 ## Structure du projet
-LOG430-Labo/
-.
-├── .github/
-│   └── workflows/
-│       └── pipeline.yml        # Déclenche les tests, build, et push Docker
-│
-├── Dockerfile                  # Instructions pour construire l’image de l’application
-├── docker-compose.yaml         # Optionnel, pour exécuter l'application avec d'autres services
-│
-├── hello_world.py              # Script principal Python : affiche "Hello World!"
-├── test_hello_world.py         # Fichier de tests unitaires avec unittest
-│
-├── .gitignore                  # Fichiers/dossiers à ignorer par Git
-└── README.md                   # Documentation du projet
 
 Rôles des fichiers
 
