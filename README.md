@@ -10,6 +10,8 @@ Ce projet simple illustre :
 
 ## Instructions
 
+0.Cloner le projet
+   git clone https://github.com/Ludo67/LOG430-Lab0.git
 1.Assurez-vous que Python 3 est installé :
    python3 --version
 
