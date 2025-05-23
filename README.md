@@ -41,10 +41,7 @@ Rôles des fichiers
 
    hello_world.py
       Contient la logique de base de l’application : une simple impression console.
-
-   test_hello_world.py
-      Vérifie automatiquement que le script fonctionne comme attendu.
-
+      
    .gitignore
       Empêche certains fichiers temporaires (cache, logs, etc.) d’être ajoutés à Git.
 
