@@ -1,0 +1,29 @@
+@startuml
+class Produit {
+  - id: int
+  - nom: str
+  - prix: float
+  - quantite: int
+}
+
+class Transaction {
+  - produit_id: int
+  - type_op: str
+  - quantite: int
+}
+
+class StockService {
+  + vendre_produit(id: int, quantite: int)
+  + retour_produit(id: int, quantite: int)
+  + consulter_stock(): List[Produit]
+}
+
+class DAO {
+  + charger_donnees(): List[Produit]
+  + sauvegarder_donnees(produits: List[Produit])
+}
+
+Produit "1" <-- "1..*" Transaction : concerne >
+UI --> StockService
+StockService --> DAO
+@enduml

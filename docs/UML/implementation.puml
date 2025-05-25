@@ -1,0 +1,22 @@
+@startuml implementation_diagram
+
+package "UI" {
+  [main.py]
+}
+
+package "Service" {
+  [StockService.py]
+}
+
+package "DAO" {
+  [product_dao.py]
+}
+
+package "Modèle" {
+  [produit.py]
+}
+
+[main.py] --> [gestion_stock.py]
+[gestion_stock.py] --> [dao_sqlite.py]
+
+@enduml

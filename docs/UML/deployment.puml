@@ -1,0 +1,15 @@
+@startuml
+node Client {
+  [Console Python] as UI
+}
+
+node Serveur {
+  [StockService]
+  [DAO_SQLite]
+  database "Fichier JSON\nou SQLite DB" as Storage
+}
+
+UI --> [StockService]
+[StockService] --> [DAO_SQLite]
+[DAO_SQLite] --> Storage
+@enduml
