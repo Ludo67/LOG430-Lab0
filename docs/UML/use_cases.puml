@@ -1,0 +1,12 @@
+@startuml use_case_diagram
+
+actor Utilisateur
+
+Utilisateur --> (Consulter stock)
+Utilisateur --> (Ajouter produit)
+Utilisateur --> (Modifier produit)
+Utilisateur --> (Supprimer produit)
+Utilisateur --> (Vente produit)
+Utilisateur --> (Retour produit)
+
+@enduml

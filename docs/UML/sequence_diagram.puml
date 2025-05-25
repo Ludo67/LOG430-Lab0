@@ -1,0 +1,13 @@
+@startuml
+actor Utilisateur
+participant "Console UI" as UI
+participant "StockService" as Service
+participant "DAO"
+
+Utilisateur -> UI : saisir id + quantité
+UI -> Service : vendre_produit(id, qte)
+Service -> DAO : charger_donnees()
+DAO --> Service : liste_produits
+Service -> DAO : sauvegarder_donnees(mise à jour)
+Service --> UI : "Vente effectuée"
+@enduml

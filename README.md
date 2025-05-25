@@ -47,3 +47,41 @@ Rôles des fichiers
 
    README.md
       Donne toutes les informations nécessaires : description, exécution, structure.
+
+## Analyse des besoins
+    ### Fonctionnels
+
+        - Ajouter, modifier, supprimer et consulter produit
+
+        - Réaliser vente et retour
+        
+        - Consulter l'état du stock
+
+    ### Non-Fonctionnels
+
+        - Facile d'utilisation (via la console)
+
+        - Données sauvegardées entre les exécutions
+
+        - Rapiditité des réponses (<3s)
+
+## Choix technologiques
+
+    - Language (Python):
+        Simple à utiliser, comprendre et apprendre.
+
+        Fiable et rapide
+
+    - Base de données (SQLite):
+        Base locale, Fiable, Transactionnelle,
+        Simple d'utilsation et d'implémentation
+    
+    - Librairies (Dataclasses, JSON):
+        Fiables, simples et peut coûteux
+
+        Pas besoin d'installation externe
+
+    - Outils de diagrammes (PlantUML):
+        Gratuit, compatible avec UML et implémenté directement dans VSCode
+
+        Facile à utiliser

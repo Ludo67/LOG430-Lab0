@@ -1,6 +1,10 @@
 version: '3.8'
 
 services:
-  helloworld:
+  stock-app:
     build: .
-    container_name: hello-world-container
+    container_name: stock-app-container
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python -m presentation_layer.main
