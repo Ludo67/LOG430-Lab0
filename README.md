@@ -1,87 +1,133 @@
-# LOG430-Lab0
+# LOG430-Lab0 – Application de gestion de stock
 
-## Description
+## 📋 Description
 
-Ce projet simple illustre :
-- Une application Python imprimant "Hello World!"
-- Des tests unitaires automatisés
+Ce projet illustre :
+- Une application Python en ligne de commande organisée en trois couches : présentation, service, accès aux données
+- Une base de données SQLite locale pour la persistance
+- Des tests unitaires pour les couches DAO et service
 - Un workflow CI/CD avec GitHub Actions
-- Un conteneur Docker construit et publié automatiquement sur Docker Hub
+- Une conteneurisation complète avec Docker et Docker Compose
 
-## Instructions
+---
 
-0.Cloner le projet
-   git clone https://github.com/Ludo67/LOG430-Lab0.git
-1.Assurez-vous que Python 3 est installé :
-   python3 --version
+## 📂 Structure du projet
 
-2.Exécutez depuis la ligne de commande :
-    python hello_world.py
+```
+├── data_access_layer/
+│   ├── __init__.py
+│   ├── product_dao.py        # Opérations CRUD sur les produits
+│   ├── init_db.py            # Initialisation de la BD SQLite
+│   ├── schema.py             # Schéma SQL (création des tables)
+│   └── produits.db           # Base de données SQLite
+│
+├── service_layer/
+│   ├── __init__.py
+│   └── stock_service.py      # Logique métier : ventes, retours, recherche
+│
+├── presentation_layer/
+│   ├── __init__.py
+│   └── main.py               # Interface console et menu utilisateur
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_dao.py           # Tests unitaires DAO
+│   └── test_stock_service.py # Tests unitaires service
+│
+├── Dockerfile
+├── docker-compose.yaml
+├── .github/workflows/ci-cd.yml
+├── .gitignore
+└── README.md
+```
 
-3.Pour exécuter les tests unitaires :
-    python -m unittest discover -s . -p "*.py"
-4.Lancer avec Docker
-   docker build -t myapp .
-   docker run myapp
-   docker-compose up --build
+---
 
+## ▶️ Instructions d’exécution
 
-## Structure du projet
+### 0. Cloner le projet
+```bash
+git clone https://github.com/Ludo67/LOG430-Lab0.git
+cd LOG430-Lab0
+```
 
-Rôles des fichiers
+### 1. Prérequis
+- Python 3.8+
+- Docker
+- Docker Compose
 
-   .github/workflows/ci-cd.yml
-      Gère le pipeline CI/CD : exécution des tests, construction de l’image Docker, push vers Docker Hub.
+### 2. Exécution locale
+```bash
+python data_access_layer/init_db.py     # Initialise la base de données
+python presentation_layer/main.py       # Lance le menu console
+```
 
-   Dockerfile
-      Contient les instructions nécessaires pour empaqueter l’application dans une image Docker.
+### 3. Exécuter les tests unitaires
+```bash
+python -m unittest discover -s tests
+```
 
-   docker-compose.yaml
-      Permet de lancer facilement l'application (et éventuellement d'autres services).
+### 4. Exécuter avec Docker
+```bash
+docker-compose up --build
+```
 
-   hello_world.py
-      Contient la logique de base de l’application : une simple impression console.
-      
-   .gitignore
-      Empêche certains fichiers temporaires (cache, logs, etc.) d’être ajoutés à Git.
+📝 Note : L’application utilise `input()`, ce qui nécessite une exécution interactive dans Docker (ex. `docker run -it`).
 
-   README.md
-      Donne toutes les informations nécessaires : description, exécution, structure.
+---
 
-## Analyse des besoins
-    ### Fonctionnels
+## 🐳 Fichiers clés
 
-        - Ajouter, modifier, supprimer et consulter produit
+- `Dockerfile` : construit l’image Python de l’application.
+- `docker-compose.yaml` : orchestre l’exécution via un service `stock-app`.
+- `.github/workflows/ci-cd.yml` : pipeline CI/CD avec tests + push vers DockerHub.
+- `produits.db` : base SQLite initialisée par `init_db.py`.
 
-        - Réaliser vente et retour
-        
-        - Consulter l'état du stock
+---
 
-    ### Non-Fonctionnels
+## ✅ Fonctionnalités
 
-        - Facile d'utilisation (via la console)
+- Recherche de produit par mot-clé
+- Enregistrement d'une vente (stock - N)
+- Annulation d'une vente (stock + N)
+- Consultation de l'inventaire
 
-        - Données sauvegardées entre les exécutions
+---
 
-        - Rapiditité des réponses (<3s)
+## 🧪 Technologies
 
-## Choix technologiques
+🐍 Python
 
-    - Language (Python):
-        Simple à utiliser, comprendre et apprendre.
+    Pourquoi ? Langage simple, lisible, et très populaire pour les projets éducatifs et prototypes.
 
-        Fiable et rapide
+    Avantage clé : Écosystème riche (librairies, frameworks), rapidité de développement, excellente compatibilité avec les outils de test, de CI/CD, et de conteneurisation.
 
-    - Base de données (SQLite):
-        Base locale, Fiable, Transactionnelle,
-        Simple d'utilsation et d'implémentation
-    
-    - Librairies (Dataclasses, JSON):
-        Fiables, simples et peut coûteux
+🗃️ SQLite
 
-        Pas besoin d'installation externe
+    Pourquoi ? Base de données légère et embarquée, parfaite pour les applications simples sans serveur SGBD.
 
-    - Outils de diagrammes (PlantUML):
-        Gratuit, compatible avec UML et implémenté directement dans VSCode
+    Avantage clé : Aucune configuration serveur, fichier local produits.db, idéal pour déploiement rapide ou démonstration.
 
-        Facile à utiliser
+📦 Architecture à trois couches (DAO / Service / Présentation)
+
+    Pourquoi ? Séparation claire des responsabilités (accès aux données, logique métier, interface utilisateur).
+
+    Avantage clé : Facilite les tests, la maintenance, et l’évolution vers des architectures plus complexes (ex: API REST, Frontend).
+
+🧪 unittest (module Python standard)
+
+    Pourquoi ? Intégré à Python, facile à configurer, compatible avec les pipelines CI.
+
+    Avantage clé : Permet l’automatisation rapide des tests sans dépendance externe.
+
+🐳 Docker + Docker Compose
+
+    Pourquoi ? Facilite le déploiement, l’isolation de l’environnement, et la portabilité du projet.
+
+    Avantage clé : Une seule commande (docker-compose up) suffit pour lancer toute l’application, peu importe l’environnement hôte.
+
+⚙️ GitHub Actions (CI/CD)
+
+    Pourquoi ? Intégration directe avec GitHub pour automatiser les tests, la construction Docker et les déploiements.
+
+    Avantage clé : Automatisation fiable et gratuite pour projets open source, renforce la qualité du code.
