@@ -1,0 +1,14 @@
+@startuml sequence_diagram_annulation
+actor User
+participant "main.py" as Main
+participant "stock_service.py" as Service
+participant "product_dao.py" as DAO
+
+User -> Main : input("Annuler vente")
+Main -> Service : annuler_vente(id, q)
+Service -> DAO : get_by_id(id)
+DAO --> Service : produit
+Service -> DAO : update(produit + q)
+Service --> Main : confirmation
+Main --> User : "Retour enregistré"
+@enduml

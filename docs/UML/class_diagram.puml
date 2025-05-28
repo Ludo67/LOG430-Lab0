@@ -1,29 +1,31 @@
-@startuml
-class Produit {
-  - id: int
-  - nom: str
-  - prix: float
-  - quantite: int
+@startuml class_diagram
+
+package "data_access_layer" {
+  class ProduitDAO {
+    +get_all()
+    +get_by_id(id)
+    +rechercher(terme)
+    +update(produit)
+    +close()
+  }
 }
 
-class Transaction {
-  - produit_id: int
-  - type_op: str
-  - quantite: int
+package "service_layer" {
+  class StockService {
+    +rechercher_produit(terme)
+    +enregistrer_vente(id, quantite)
+    +annuler_vente(id, quantite)
+    +lister_stock()
+  }
 }
 
-class StockService {
-  + vendre_produit(id: int, quantite: int)
-  + retour_produit(id: int, quantite: int)
-  + consulter_stock(): List[Produit]
+package "presentation_layer" {
+  class Main {
+    +main()
+  }
 }
 
-class DAO {
-  + charger_donnees(): List[Produit]
-  + sauvegarder_donnees(produits: List[Produit])
-}
+Main --> StockService
+StockService --> ProduitDAO
 
-Produit "1" <-- "1..*" Transaction : concerne >
-UI --> StockService
-StockService --> DAO
 @enduml

@@ -1,12 +1,13 @@
-@startuml use_case_diagram
-
-actor Utilisateur
-
-Utilisateur --> (Consulter stock)
-Utilisateur --> (Ajouter produit)
-Utilisateur --> (Modifier produit)
-Utilisateur --> (Supprimer produit)
-Utilisateur --> (Vente produit)
-Utilisateur --> (Retour produit)
-
+@startuml use_cases
+actor "Employé magasin" as User
+rectangle "Application Console" {
+  usecase "Rechercher produit" as UC1
+  usecase "Enregistrer vente" as UC2
+  usecase "Annuler vente" as UC3
+  usecase "Consulter stock" as UC4
+}
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
 @enduml

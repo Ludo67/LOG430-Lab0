@@ -1,0 +1,13 @@
+@startuml sequence_diagram_stock
+actor User
+participant "main.py" as Main
+participant "stock_service.py" as Service
+participant "product_dao.py" as DAO
+
+User -> Main : input("Consulter stock")
+Main -> Service : lister_stock()
+Service -> DAO : get_all()
+DAO --> Service : liste produits
+Service --> Main : liste produits
+Main --> User : afficher stock
+@enduml
