@@ -1,22 +1,26 @@
-@startuml implementation_diagram
-
-package "UI" {
-  [main.py]
+@startuml implementation
+package "presentation_layer" {
+  class main.py
+  class __init__.py
 }
 
-package "Service" {
-  [StockService.py]
+package "service_layer" {
+  class stock_service.py
+  class __init__.py
 }
 
-package "DAO" {
-  [product_dao.py]
+package "data_access_layer" {
+  class product_dao.py
+  class init_db.py
+  class schema.py
+  class __init__.py
+  class produits.db
 }
 
-package "Modèle" {
-  [produit.py]
+package "tests" {
+  class test_dao.py
+  class test_stock_service.py
+  class __init__.py
 }
-
-[main.py] --> [gestion_stock.py]
-[gestion_stock.py] --> [dao_sqlite.py]
 
 @enduml

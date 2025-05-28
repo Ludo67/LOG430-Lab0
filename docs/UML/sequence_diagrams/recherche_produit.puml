@@ -1,0 +1,13 @@
+@startuml sequence_diagram_recherche
+actor User
+participant "main.py" as Main
+participant "stock_service.py" as Service
+participant "product_dao.py" as DAO
+
+User -> Main : input("Rechercher")
+Main -> Service : rechercher_produit(terme)
+Service -> DAO : rechercher(terme)
+DAO --> Service : liste de produits
+Service --> Main : liste de produits
+Main --> User : afficher produits
+@enduml

@@ -1,15 +1,15 @@
-@startuml
-node Client {
-  [Console Python] as UI
+@startuml deployment
+node "User Terminal" {
+  [Console Interface]
 }
-
-node Serveur {
-  [StockService]
-  [DAO_SQLite]
-  database "Fichier JSON\nou SQLite DB" as Storage
+node "Docker Container" {
+  folder "App" {
+    [main.py] --> [stock_service.py]
+    [stock_service.py] --> [product_dao.py]
+  }
+  database "SQLite (produits.db)"
 }
-
-UI --> [StockService]
-[StockService] --> [DAO_SQLite]
-[DAO_SQLite] --> Storage
+[stock_service.py] --> [product_dao.py]
+[product_dao.py] --> [SQLite (produits.db)]
+[Console Interface] --> [main.py]
 @enduml
