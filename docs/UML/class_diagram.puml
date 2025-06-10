@@ -3,19 +3,29 @@
 package "data_access_layer" {
   class ProduitDAO {
     +get_all()
-    +get_by_id(id)
+    +get_by_id(id, magasin_id)
     +rechercher(terme)
     +update(produit)
     +close()
+    +get_ventes_par_magasin()
   }
 }
 
 package "service_layer" {
   class StockService {
     +rechercher_produit(terme)
-    +enregistrer_vente(id, quantite)
-    +annuler_vente(id, quantite)
+    +enregistrer_vente(id, quantite, magasin)
+    +annuler_vente(id, quantite, magasin)
     +lister_stock()
+  }
+  class ReportingService {
+    +tableau_de_bord()
+    +rapport_ventes()
+    +produits_en_rupure(seuil)
+  }
+  class RestockService {
+    +transferer_stock(...)
+    +get_ventes_par_magasin()
   }
 }
 
@@ -26,6 +36,9 @@ package "presentation_layer" {
 }
 
 Main --> StockService
+Main --> ReportingService
 StockService --> ProduitDAO
+ReportingService --> ProduitDAO
+RestockService --> ProduitDAO
 
 @enduml

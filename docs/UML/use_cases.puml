@@ -1,13 +1,18 @@
 @startuml use_cases
-actor "Employé magasin" as User
+actor "Employé magasin" as Em
+actor "Gestionnaire maison mère" as Admin
 rectangle "Application Console" {
-  usecase "Rechercher produit" as UC1
-  usecase "Enregistrer vente" as UC2
-  usecase "Annuler vente" as UC3
-  usecase "Consulter stock" as UC4
+  usecase "UC1 - Rapport de ventes" as UC1
+  usecase "UC2 - Réapprovisionnement" as UC2
+  usecase "UC3 - Tableau de bord" as UC3
+  usecase "UC4 - Modifier produits" as UC4
+  usecase "UC6 - Réappro magasin" as UC6
+  usecase "UC7 - Alerte seuil critique" as UC7
 }
-User --> UC1
-User --> UC2
-User --> UC3
-User --> UC4
+Em --> UC2
+Em --> UC6
+Em --> UC7
+Admin --> UC1
+Admin --> UC3
+Admin --> UC4
 @enduml

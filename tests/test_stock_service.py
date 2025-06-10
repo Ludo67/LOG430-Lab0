@@ -13,25 +13,29 @@ class TestStockService(unittest.TestCase):
         self.service = StockService(self.dao)
         self.dao.update({
             "id": "S001", "nom": "ServiceProduit", "categorie": "Test",
-            "prix": 20.0, "quantite": 10
+            "prix": 20.0, "quantite": 10, "magasin_id": "M001"
+        })
+        self.dao.insert({
+            "id": "S001", "nom": "ServiceProduit", "categorie": "Test",
+            "prix": 20.0, "quantite": 10, "magasin_id": "M001"
         })
 
     def test_enregistrement_vente(self):
         """Vérifie que la vente diminue correctement le stock."""
-        self.service.enregistrer_vente("S001", 3)
-        produit = self.dao.get_by_id("S001")
+        self.service.enregistrer_vente("S001", 3, "M001")
+        produit = self.dao.get_by_id("S001", "M001")
         self.assertEqual(produit["quantite"], 7)
 
     def test_annulation_vente(self):
         """Vérifie que l'annulation d'une vente augmente la quantité en stock."""
-        self.service.annuler_vente("S001", 2)
-        produit = self.dao.get_by_id("S001")
+        self.service.annuler_vente("S001", 2, "M001")
+        produit = self.dao.get_by_id("S001", "M001")
         self.assertEqual(produit["quantite"], 12)
 
     def test_vente_stock_insuffisant(self):
         """Doit lever une exception si la quantité demandée dépasse le stock."""
         with self.assertRaises(ValueError):
-            self.service.enregistrer_vente("S001", 999)
+            self.service.enregistrer_vente("S001", 999, "M001")
 
     def test_recherche_service(self):
         """Doit retrouver un produit via une recherche par mot-clé."""

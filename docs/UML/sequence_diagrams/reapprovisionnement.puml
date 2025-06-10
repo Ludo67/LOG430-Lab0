@@ -1,0 +1,20 @@
+@startuml sequence_diagram_reapprovisionnement
+actor User
+participant "main.py" as Main
+participant "restock_service.py" as Restock
+participant "product_dao.py" as DAO
+
+User -> Main : input("Réapprovisionnement")
+Main -> Restock : transferer_stock(id, q, magasin_src, magasin_dst)
+Restock -> DAO : get_by_id(id, magasin_src)
+DAO --> Restock : produit_src
+Restock -> DAO : update(produit_src)
+Restock -> DAO : get_by_id(id, magasin_dst)
+DAO --> Restock : produit_dst ou None
+alt produit_dst existe
+  Restock -> DAO : update(produit_dst)
+else
+  Restock -> DAO : insert(nouveau_produit)
+end
+Main --> User : confirmation
+@enduml

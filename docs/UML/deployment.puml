@@ -1,15 +1,16 @@
 @startuml deployment
-node "User Terminal" {
-  [Console Interface]
+node "Poste utilisateur" {
+  [Console Python]
 }
-node "Docker Container" {
+node "Conteneur Docker" {
   folder "App" {
     [main.py] --> [stock_service.py]
+    [main.py] --> [reporting_service.py]
     [stock_service.py] --> [product_dao.py]
+    [reporting_service.py] --> [product_dao.py]
   }
-  database "SQLite (produits.db)"
+  database "SQLite produits.db"
 }
-[stock_service.py] --> [product_dao.py]
-[product_dao.py] --> [SQLite (produits.db)]
-[Console Interface] --> [main.py]
+[product_dao.py] --> [SQLite produits.db]
+[Console Python] --> [main.py]
 @enduml

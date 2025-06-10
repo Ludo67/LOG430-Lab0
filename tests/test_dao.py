@@ -17,17 +17,18 @@ class TestProduitDAO(unittest.TestCase):
             "nom": "Test Produit",
             "categorie": "Test",
             "prix": 10.0,
-            "quantite": 5
+            "quantite": 5,
+            "magasin_id": "M001" 
         }
-        self.dao.update(produit)
-        resultat = self.dao.get_by_id("T001")
+        self.dao.insert(produit)
+        resultat = self.dao.get_by_id("T001", "M001")
         self.assertEqual(resultat["nom"], "Test Produit")
 
     def test_recherche(self):
         """Vérifie qu'un produit peut être retrouvé par mot-clé."""
-        self.dao.update({
+        self.dao.insert({
             "id": "T002", "nom": "Souris Test", "categorie": "Périphérique",
-            "prix": 15.0, "quantite": 10
+            "prix": 15.0, "quantite": 10, "magasin_id": "M001"
         })
         resultats = self.dao.rechercher("souris")
         self.assertTrue(any("Souris" in r["nom"] for r in resultats))

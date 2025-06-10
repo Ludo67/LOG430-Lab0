@@ -1,0 +1,13 @@
+@startuml sequence_diagram_tableau_bord
+actor Admin
+participant "main.py" as Main
+participant "reporting_service.py" as Reporting
+participant "product_dao.py" as DAO
+
+Admin -> Main : input("Afficher tableau de bord")
+Main -> Reporting : tableau_de_bord()
+Reporting -> DAO : get_ventes_par_magasin()
+DAO --> Reporting : stats
+Reporting --> Main : données tableau
+Main --> Admin : affiche rapport (CA, ruptures, surstock, tendances)
+@enduml

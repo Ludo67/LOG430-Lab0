@@ -1,36 +1,29 @@
-"""Initialise la base SQLite avec des produits de test."""
-
-import os
+"""Initialisation de la base de données."""
 import sqlite3
-from data_access_layer.schema import CREATE_PRODUITS_TABLE
+import os
+from data_access_layer.schema import create_tables
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "produits.db")
+db_path = os.path.join(os.path.dirname(__file__), "produits.db")
+conn = sqlite3.connect(db_path)
 
-PRODUITS = [
-    ("P001", "Clavier Logitech", "Périphérique", 39.99, 20),
-    ("P002", "Souris HP", "Périphérique", 24.99, 35),
-    ("P003", "Écran Samsung 24\"", "Affichage", 149.99, 10),
-    ("P004", "Ordinateur portable Dell", "Informatique", 999.99, 5),
-    ("P005", "Casque audio Sony", "Audio", 59.99, 15)
-]
+# Créer les tables
+create_tables(conn)
 
-def init_db():
-    """Crée la table produits et insère des entrées de test."""
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        with conn:
-            conn.execute(CREATE_PRODUITS_TABLE)
-            for produit in PRODUITS:
-                print(f"Insertion de : {produit}")
-                conn.execute(
-                    "INSERT OR REPLACE INTO produits VALUES (?, ?, ?, ?, ?)",
-                    produit
-                )
-        print("✅ Données insérées avec succès.")
-    except sqlite3.Error as error:
-        print(f"❌ Erreur SQLite : {error}")
-    finally:
-        conn.close()
+# Remplir quelques magasins et produits
+with conn:
+    conn.execute("INSERT OR IGNORE INTO magasins (id, nom) VALUES (?, ?)", ("M001", "Magasin A"))
+    conn.execute("INSERT OR IGNORE INTO magasins (id, nom) VALUES (?, ?)", ("M002", "Magasin B"))
 
-if __name__ == "__main__":
-    init_db()
+    produits = [
+        ("P001", "Clavier Logitech", "Périphérique", 39.99, 20, "M001"),
+        ("P002", "Souris HP", "Périphérique", 24.99, 35, "M001"),
+        ("P003", "Écran Samsung 24\"", "Affichage", 149.99, 10, "M002"),
+        ("P004", "Ordinateur portable Dell", "Informatique", 999.99, 5, "M002"),
+        ("P005", "Casque audio Sony", "Audio", 59.99, 15, "M001")
+    ]
+
+    for p in produits:
+        conn.execute("INSERT OR REPLACE INTO produits VALUES (?, ?, ?, ?, ?, ?)", p)
+
+print("✅ Base initialisée avec magasins, produits et structure des ventes.")
+conn.close()

@@ -1,14 +1,15 @@
 @startuml sequence_diagram_vente
 actor User
 participant "main.py" as Main
-participant "stock_service.py" as Service
+participant "stock_service.py" as Stock
 participant "product_dao.py" as DAO
 
-User -> Main : input("Vente")
-Main -> Service : enregistrer_vente(id, q)
-Service -> DAO : get_by_id(id)
-DAO --> Service : produit
-Service -> DAO : update(produit - q)
-Service --> Main : confirmation
-Main --> User : "Vente enregistrée"
+User -> Main : input("Enregistrer vente")
+Main -> Stock : enregistrer_vente(id, q, magasin_id)
+Stock -> DAO : get_by_id(id, magasin_id)
+DAO --> Stock : produit
+Stock -> DAO : update(nouvelle_quantite)
+Stock -> DAO : INSERT INTO ventes(...)
+Stock --> Main : confirmation
+Main --> User : vente enregistrée
 @enduml

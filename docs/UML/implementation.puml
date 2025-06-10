@@ -6,6 +6,8 @@ package "presentation_layer" {
 
 package "service_layer" {
   class stock_service.py
+  class reporting_service.py
+  class restock_service.py
   class __init__.py
 }
 
@@ -23,4 +25,12 @@ package "tests" {
   class __init__.py
 }
 
+main.py --> stock_service.py
+main.py --> reporting_service.py
+main.py --> restock_service.py
+restock_service.py --> product_dao.py
+stock_service.py --> product_dao.py
+reporting_service.py --> product_dao.py
+product_dao.py --> schema.py
+product_dao.py --> produits.db
 @enduml

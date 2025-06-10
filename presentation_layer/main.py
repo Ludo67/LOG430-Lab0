@@ -1,6 +1,11 @@
-"""Interface console pour gérer les produits en stock."""
+"""Point d'entrée principal de l'application."""
 
+
+from service_layer.restock_service import RestockService
+from service_layer.reporting_service import ReportingService
 from service_layer.stock_service import StockService
+from data_access_layer.product_dao import ProduitDAO
+
 
 def afficher_menu():
     """Affiche le menu principal."""
@@ -9,60 +14,65 @@ def afficher_menu():
     print("2. Enregistrer une vente")
     print("3. Annuler une vente")
     print("4. Consulter le stock")
-    print("5. Quitter")
+    print("5. Réapprovisionnement entre magasins")
+    print("6. Tableau de bord")
+    print("7. Quitter")
+
 
 def main():
-    """Boucle principale d'interaction utilisateur."""
-    service = StockService()
+    """Point d'entrée de l'application."""
+    dao = ProduitDAO()
+    stock_service = StockService(dao)
+    reappro_service = RestockService(dao)
+    reporting_service = ReportingService(dao)
+
     while True:
         afficher_menu()
         choix = input("Choix: ")
 
         try:
             if choix == "1":
-                terme = input("Entrez nom, id ou catégorie: ")
-                resultats = service.rechercher_produit(terme)
+                terme = input("Terme de recherche: ")
+                resultats = stock_service.rechercher_produit(terme)
                 for produit in resultats:
-                    print(
-                        f"ID: {produit['id']} | Nom: {produit['nom']} | "
-                        f"Catégorie: {produit['categorie']} | Prix: {produit['prix']} | "
-                        f"Stock: {produit['quantite']}"
-                    )
+                    print(produit)
 
             elif choix == "2":
-                produit_id = input("ID produit: ")
+                produit_id = input("ID du produit vendu: ")
                 quantite = int(input("Quantité vendue: "))
-                service.enregistrer_vente(produit_id, quantite)
-                print("Vente enregistrée avec succès.")
+                magasin_id = int(input("ID du magasin: "))
+                stock_service.enregistrer_vente(produit_id, quantite, magasin_id)
 
             elif choix == "3":
-                produit_id = input("ID produit: ")
-                quantite = int(input("Quantité à annuler: "))
-                service.annuler_vente(produit_id, quantite)
-                print("Retour enregistré avec succès.")
+                produit_id = input("ID du produit à annuler: ")
+                quantite = int(input("Quantité à restaurer: "))
+                magasin_id = int(input("ID du magasin: "))
+                stock_service.annuler_vente(produit_id, quantite, magasin_id)
 
             elif choix == "4":
-                stock = service.lister_stock()
-                if not stock:
-                    print("Aucun produit en stock.")
-                    continue
-
+                stock = stock_service.lister_stock()
                 for produit in stock:
-                    print(
-                        f"ID: {produit['id']} | Nom: {produit['nom']} | "
-                        f"Catégorie: {produit['categorie']} | Prix: {produit['prix']} | "
-                        f"Stock: {produit['quantite']}"
-                    )
+                    print(produit)
 
             elif choix == "5":
+                source = input("ID du magasin source: ")
+                destination = input("ID du magasin destination: ")
+                produit_id = input("ID du produit: ")
+                quantite = int(input("Quantité à transférer: "))
+                reappro_service.transferer_stock(produit_id, quantite, source, destination)
+
+            elif choix == "6":
+                reporting_service.generer_tableau_de_bord()
+
+            elif choix == "7":
                 print("Au revoir !")
                 break
 
-        except (KeyError, RuntimeError, LookupError) as erreur:
-            print(f"Erreur de traitement : {erreur}")
+            else:
+                print("Choix invalide. Veuillez réessayer.")
+
+        except ValueError as err:
+            print(f"Erreur : {err}")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+    main()
