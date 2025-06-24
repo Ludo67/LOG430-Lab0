@@ -5,7 +5,22 @@ from service_layer.restock_service import RestockService
 from service_layer.reporting_service import ReportingService
 from service_layer.stock_service import StockService
 from data_access_layer.product_dao import ProduitDAO
+from presentation_layer.produits_routes import router as produit_router
+from fastapi import FastAPI
 
+app = FastAPI(title="API de gestion de stock")
+dao = ProduitDAO()
+stock_service = StockService(dao)
+reporting_service = ReportingService(dao)
+reappro_service = RestockService(dao)
+
+# Injection de dépendances dans le routeur
+app.include_router(produit_router, prefix="", tags=["Produits"], dependencies=[],
+                   responses={404: {"description": "Not found"}})
+
+@app.get("/")
+def root():
+    return {"message": "Bienvenue dans l'API de gestion de stock."}
 
 def afficher_menu():
     """Affiche le menu principal."""
@@ -22,9 +37,9 @@ def afficher_menu():
 def main():
     """Point d'entrée de l'application."""
     dao = ProduitDAO()
-    stock_service = StockService(dao)
-    reappro_service = RestockService(dao)
-    reporting_service = ReportingService(dao)
+    # stock_service = StockService(dao)
+    # reappro_service = RestockService(dao)
+    # reporting_service = ReportingService(dao)
 
     while True:
         afficher_menu()

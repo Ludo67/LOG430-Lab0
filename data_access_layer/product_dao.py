@@ -14,6 +14,7 @@ class ProduitDAO:
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self._create_tables()
+        self.db_path = db_path
 
     def _create_tables(self):
         """
@@ -27,8 +28,20 @@ class ProduitDAO:
         Récupère tous les produits de la base de données.
         :return: Liste de dictionnaires représentant les produits.
         """
-        cursor = self.conn.execute("SELECT * FROM produits")
-        return [dict(row) for row in cursor.fetchall()]
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM produits")
+            rows = cursor.fetchall()
+            return [
+                {
+                    "id": row[0],
+                    "nom": row[1],
+                    "categorie": row[2],
+                    "prix": row[3],
+                    "quantite": row[4],
+                    "magasin_id": row[5]
+                } for row in rows
+            ]
 
     def get_by_id(self, produit_id, magasin_id):
         """
@@ -37,10 +50,20 @@ class ProduitDAO:
         :param magasin_id: ID du magasin auquel le produit appartient.
         :return: Dictionnaire représentant le produit, ou None si non trouvé.
         """
-        cursor = self.conn.execute(
-            "SELECT * FROM produits WHERE id = ? AND magasin_id = ?", (produit_id, magasin_id)
-        )
-        return cursor.fetchone()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM produits WHERE id=? AND magasin_id=?", (produit_id, magasin_id))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "nom": row[1],
+                    "categorie": row[2],
+                    "prix": row[3],
+                    "quantite": row[4],
+                    "magasin_id": row[5]
+                }
+            return None
 
     def rechercher(self, terme):
         """
@@ -48,50 +71,64 @@ class ProduitDAO:
         :param terme: Terme de recherche.
         :return: Liste de dictionnaires représentant les produits correspondants.
         """
-        cursor = self.conn.execute("""
-            SELECT * FROM produits
-            WHERE id LIKE ? OR nom LIKE ? OR categorie LIKE ?
-        """, (f"%{terme}%", f"%{terme}%", f"%{terme}%"))
-        return [dict(row) for row in cursor.fetchall()]
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
+                SELECT * FROM produits
+                WHERE id LIKE ? OR nom LIKE ? OR categorie LIKE ?
+            """, (f"%{terme}%", f"%{terme}%", f"%{terme}%"))
+            return [dict(row) for row in cursor.fetchall()]
 
     def update(self, produit):
         """
         Met à jour un produit dans la base de données.
         :param produit: Dictionnaire représentant le produit à mettre à jour.
         """
-        self.conn.execute("""
-            UPDATE produits SET nom = ?, categorie = ?, prix = ?, quantite = ?
-            WHERE id = ? AND magasin_id = ?
-        """, (produit["nom"], produit["categorie"], produit["prix"],
-              produit["quantite"], produit["id"], produit["magasin_id"]))
-        self.conn.commit()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                UPDATE produits SET nom = ?, categorie = ?, prix = ?, quantite = ?
+                WHERE id = ? AND magasin_id = ?
+            """, (produit["nom"], produit["categorie"], produit["prix"],
+                  produit["quantite"], produit["id"], produit["magasin_id"]))
+            conn.commit()
+
 
     def insert(self, produit):
         """
         Insère un nouveau produit dans la base de données.
         :param produit: Dictionnaire représentant le produit à insérer.
         """
-        self.conn.execute("""
-            INSERT INTO produits (id, nom, categorie, prix, quantite, magasin_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (produit["id"], produit["nom"], produit["categorie"], produit["prix"],
-               produit["quantite"], produit["magasin_id"]))
-        self.conn.commit()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                INSERT INTO produits (id, nom, categorie, prix, quantite, magasin_id)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (produit["id"], produit["nom"], produit["categorie"], produit["prix"],
+                   produit["quantite"], produit["magasin_id"]))
+            conn.commit()
 
     def get_ventes_par_magasin(self):
         """
         Récupère le total des ventes par magasin.
         :return: Dictionnaire avec l'ID du magasin comme clé et le total des ventes comme valeur.
         """
-        cursor = self.conn.execute("""
-            SELECT magasin_id, SUM(quantite) as total
-            FROM ventes
-            GROUP BY magasin_id
-        """)
-        return {row["magasin_id"]: row["total"] for row in cursor.fetchall()}
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
+                SELECT magasin_id, SUM(quantite) as total
+                FROM ventes
+                GROUP BY magasin_id
+            """)
+            return {row["magasin_id"]: row["total"] for row in cursor.fetchall()}
+
+    def enregistrer_vente(self, produit_id, quantite, magasin_id):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO ventes (produit_id, quantite, magasin_id) VALUES (?, ?, ?)",
+                           (produit_id, quantite, magasin_id))
+            conn.commit()
 
     def close(self):
         """
         Ferme la connexion à la base de données.
         """
-        self.conn.close()
+        pass

@@ -35,10 +35,6 @@ class StockService:
         """Retourne tous les produits en stock."""
         return self.dao.get_all()
 
-    def _log_vente(self, produit_id: int, quantite: int, magasin_id: int):
-        """Insère un enregistrement de vente dans la base de données."""
-        self.dao.conn.execute(
-            "INSERT INTO ventes (produit_id, quantite, magasin_id) VALUES (?, ?, ?)",
-            (produit_id, quantite, magasin_id)
-        )
-        self.dao.conn.commit()
+    def _log_vente(self, produit_id, quantite, magasin_id):
+        self.dao.enregistrer_vente(produit_id, quantite, magasin_id)
+
