@@ -1,6 +1,9 @@
-"""Service de gestion des opérations sur le stock."""
+"""Service de gestion des opérations sur le stock avec SQLAlchemy."""
 
+from sqlalchemy.orm import Session
 from data_access_layer.product_dao import ProduitDAO
+from data_access_layer.models import Produit, Vente
+
 
 
 class StockService:
@@ -9,36 +12,40 @@ class StockService:
     def __init__(self, dao: ProduitDAO):
         """Initialise le service avec un DAO de produit."""
         self.dao = dao
+        self.session: Session = dao.session
 
     def rechercher_produit(self, terme: str):
         """Recherche un produit par mot-clé."""
         return self.dao.rechercher(terme)
 
     def enregistrer_vente(self, produit_id: int, quantite: int, magasin_id: int):
-        """Enregistre une vente."""
-        produit = dict(self.dao.get_by_id(produit_id, magasin_id))
-        if not produit or int(produit["quantite"]) < quantite:
-            raise ValueError("Stock insuffisant ou produit introuvable")
-        produit["quantite"] = int(produit["quantite"]) - quantite
+        """Enregistre une vente en décrémentant le stock et en loguant l'opération."""
+        produit = self.dao.get_by_id(produit_id, magasin_id)
+        if not produit:
+            raise ValueError("Produit introuvable")
+
+        if produit.quantite < quantite:
+            raise ValueError("Stock insuffisant")
+
+        produit.quantite -= quantite
         self.dao.update(produit)
         self._log_vente(produit_id, quantite, magasin_id)
 
     def annuler_vente(self, produit_id: int, quantite: int, magasin_id: int):
-        """Annule une vente."""
-        produit = dict(self.dao.get_by_id(produit_id, magasin_id))
+        """Annule une vente en restaurant le stock du produit."""
+        produit = self.dao.get_by_id(produit_id, magasin_id)
         if not produit:
             raise ValueError("Produit introuvable")
-        produit["quantite"] = int(produit["quantite"]) + quantite
+
+        produit.quantite += quantite
         self.dao.update(produit)
 
     def lister_stock(self):
         """Retourne tous les produits en stock."""
-        return self.dao.get_all()
+        return self.session.query(Produit).filter(Produit.quantite > 0).all()
 
     def _log_vente(self, produit_id: int, quantite: int, magasin_id: int):
-        """Insère un enregistrement de vente dans la base de données."""
-        self.dao.conn.execute(
-            "INSERT INTO ventes (produit_id, quantite, magasin_id) VALUES (?, ?, ?)",
-            (produit_id, quantite, magasin_id)
-        )
-        self.dao.conn.commit()
+        """Ajoute une entrée de vente dans la base de données."""
+        vente = Vente(produit_id=produit_id, quantite=quantite, magasin_id=magasin_id)
+        self.session.add(vente)
+        self.session.commit()

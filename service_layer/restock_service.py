@@ -1,6 +1,8 @@
 """Service de gestion du réapprovisionnement entre magasins."""
 
+from sqlalchemy.orm import Session
 from data_access_layer.product_dao import ProduitDAO
+from data_access_layer.models import Produit
 
 
 class RestockService:
@@ -9,10 +11,11 @@ class RestockService:
     def __init__(self, dao: ProduitDAO):
         """Initialise le service avec un DAO de produit."""
         self.dao = dao
+        self.session: Session = dao.session
 
     def get_stock_par_magasin(self, magasin_id: int):
         """Retourne les produits d'un magasin donné."""
-        return self.dao.get_by_magasin(magasin_id)
+        return self.session.query(Produit).filter_by(magasin_id=magasin_id).all()
 
     def transferer_stock(
         self,
@@ -33,28 +36,32 @@ class RestockService:
         Raises:
             ValueError: Si le stock est insuffisant dans le magasin source.
         """
-        source = self.dao.get_by_id(produit_id, magasin_source)
-        if not source or int(source["quantite"]) < quantite:
+        source = self.session.query(Produit).filter_by(
+            id=produit_id, magasin_id=magasin_source
+        ).first()
+
+        if not source or source.quantite < quantite:
             raise ValueError("Stock insuffisant dans le magasin source")
 
-        source["quantite"] = int(source["quantite"]) - quantite
-        self.dao.update(source)
+        # Décrémenter le stock du magasin source
+        source.quantite -= quantite
 
-        cible = self.dao.get_by_id(produit_id, magasin_cible)
+        # Ajouter au stock du magasin cible
+        cible = self.session.query(Produit).filter_by(
+            id=produit_id, magasin_id=magasin_cible
+        ).first()
+
         if cible:
-            cible["quantite"] = int(cible["quantite"]) + quantite
-            self.dao.update(cible)
+            cible.quantite += quantite
         else:
-            nouveau_produit = {
-                "id": source["id"],
-                "nom": source["nom"],
-                "categorie": (
-                    source["categorie"]
-                    if "categorie" in source and source["categorie"]
-                    else "Inconnue"
-                ),
-                "quantite": quantite,
-                "prix": float(source["prix"]),
-                "magasin_id": magasin_cible
-            }
-            self.dao.insert(nouveau_produit)
+            nouveau_produit = Produit(
+                id=source.id,
+                magasin_id=magasin_cible,
+                nom=source.nom,
+                categorie=source.categorie or "Inconnue",
+                prix=source.prix,
+                quantite=quantite,
+            )
+            self.session.add(nouveau_produit)
+
+        self.session.commit()

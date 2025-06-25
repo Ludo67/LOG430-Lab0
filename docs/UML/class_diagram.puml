@@ -1,4 +1,4 @@
-@startuml class_diagram
+@startuml vue_logique
 
 package "data_access_layer" {
   class ProduitDAO {
@@ -14,18 +14,19 @@ package "data_access_layer" {
 package "service_layer" {
   class StockService {
     +rechercher_produit(terme)
-    +enregistrer_vente(id, quantite, magasin)
-    +annuler_vente(id, quantite, magasin)
+    +enregistrer_vente(id, quantite, magasin_id)
+    +annuler_vente(id, quantite, magasin_id)
     +lister_stock()
   }
+
   class ReportingService {
     +tableau_de_bord()
     +rapport_ventes()
-    +produits_en_rupure(seuil)
+    +produits_en_rupture(seuil)
   }
+
   class RestockService {
-    +transferer_stock(...)
-    +get_ventes_par_magasin()
+    +transferer_stock(produit_id, quantite, magasin_source, magasin_cible)
   }
 }
 
@@ -37,6 +38,8 @@ package "presentation_layer" {
 
 Main --> StockService
 Main --> ReportingService
+Main --> RestockService
+
 StockService --> ProduitDAO
 ReportingService --> ProduitDAO
 RestockService --> ProduitDAO

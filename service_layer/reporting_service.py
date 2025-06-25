@@ -1,4 +1,9 @@
-"""Service de génération de rapports et de tableau de bord."""
+"""Service de génération de rapports et de tableau de bord avec SQLAlchemy."""
+
+from sqlalchemy import func, text
+from sqlalchemy.orm import Session
+from data_access_layer.models import Produit, Vente
+
 
 class ReportingService:
     """Service fournissant des rapports de ventes et de stock."""
@@ -21,79 +26,90 @@ class ReportingService:
 
     def rapport_ventes(self):
         """Retourne la liste des ventes groupées par magasin et produit."""
-        cursor = self.dao.conn.execute("""
-            SELECT magasin_id, produit_id, SUM(quantite) as total_vendu
-            FROM ventes
-            GROUP BY magasin_id, produit_id
-        """)
-        return [dict(row) for row in cursor.fetchall()]
+        session: Session = self.dao.session
+        resultats = session.query(
+            Vente.magasin_id,
+            Vente.produit_id,
+            func.sum(Vente.quantite).label("total_vendu")
+        ).group_by(Vente.magasin_id, Vente.produit_id).all()
+
+        return [
+            {
+                "magasin_id": r.magasin_id,
+                "produit_id": r.produit_id,
+                "total_vendu": r.total_vendu
+            }
+            for r in resultats
+        ]
 
     def produits_en_rupture(self, seuil=5):
         """Retourne les produits dont le stock est inférieur ou égal au seuil."""
-        cursor = self.dao.conn.execute("""
-            SELECT * FROM produits
-            WHERE quantite <= ?
-        """, (seuil,))
-        return [dict(row) for row in cursor.fetchall()]
+        session: Session = self.dao.session
+        produits = session.query(Produit).filter(Produit.quantite <= seuil).all()
+        return [p.__dict__ for p in produits]
 
     def generer_tableau_de_bord(self):
         """Affiche le tableau de bord complet avec plusieurs rapports."""
-        cursor = self.dao.conn.cursor()
+        session: Session = self.dao.session
 
         print("\n--- Rapport consolidé des ventes ---")
-        cursor.execute("""
-            SELECT p.id, p.nom, p.magasin_id,
-                   SUM(v.quantite * p.prix) AS chiffre_affaires,
-                   SUM(v.quantite) AS ventes,
-                   p.prix AS prix_unitaire,
-                   p.categorie AS categorie
-            FROM ventes v
-            JOIN produits p ON v.produit_id = p.id AND v.magasin_id = p.magasin_id
-            GROUP BY p.id, p.magasin_id
-        """)
-        produits = cursor.fetchall()
-        for produit in produits:
+        ventes = session.query(
+            Produit.id,
+            Produit.nom,
+            Produit.magasin_id,
+            func.sum(Vente.quantite * Produit.prix).label("chiffre_affaires"),
+            func.sum(Vente.quantite).label("ventes"),
+            Produit.prix,
+            Produit.categorie
+        ).join(
+            Produit,
+            (Vente.produit_id == Produit.id) &
+            (Vente.magasin_id == Produit.magasin_id)
+        ).group_by(Produit.id, Produit.magasin_id).all()
+
+        for produit in ventes:
             print(
-                f"[{produit['magasin_id']}] {produit['nom']} | "
-                f"{produit['ventes']} ventes | CA: {produit['chiffre_affaires']:.2f} $"
+                f"[{produit.magasin_id}] {produit.nom} | "
+                f"{produit.ventes} ventes | CA: {produit.chiffre_affaires:.2f} $"
             )
 
         print("\n--- Produits en rupture de stock ---")
-        ruptures = self.dao.conn.execute("""
-            SELECT id, nom, magasin_id FROM produits WHERE quantite <= 0
-        """).fetchall()
+        ruptures = session.query(Produit).filter(Produit.quantite <= 0).all()
         for produit in ruptures:
-            print(f"[{produit['magasin_id']}] {produit['nom']} (id={produit['id']})")
+            print(f"[{produit.magasin_id}] {produit.nom} (id={produit.id})")
 
         print("\n--- Produits en surstock ---")
-        surplus = self.dao.conn.execute("""
-            SELECT id, nom, quantite, magasin_id FROM produits WHERE quantite > 30
-        """).fetchall()
+        surplus = session.query(Produit).filter(Produit.quantite > 30).all()
         for produit in surplus:
-            print(f"[{produit['magasin_id']}] {produit['nom']} ({produit['quantite']} en stock)")
+            print(f"[{produit.magasin_id}] {produit.nom} ({produit.quantite} en stock)")
 
         print("\n--- Chiffre d'affaires global ---")
-        result = self.dao.conn.execute("""
-            SELECT SUM(v.quantite * p.prix)
-            FROM ventes v
-            JOIN produits p ON v.produit_id = p.id AND v.magasin_id = p.magasin_id
-        """).fetchone()
-        total = result[0] if result and result[0] is not None else 0
+        total = session.query(
+            func.sum(Vente.quantite * Produit.prix)
+        ).join(
+            Produit,
+            (Vente.produit_id == Produit.id) &
+            (Vente.magasin_id == Produit.magasin_id)
+        ).scalar() or 0
         print(f"\n💰 Chiffre d'affaires total : {total:.2f} $")
 
         print("\n--- Tendances hebdomadaires ---")
-        cursor.execute("""
-            SELECT strftime('%Y-%W', timestamp) AS semaine,
-                   produit_id,
-                   SUM(quantite) AS total_hebdo
-            FROM ventes
-            GROUP BY semaine, produit_id
-            ORDER BY semaine DESC
-            LIMIT 10
-        """)
-        tendances = cursor.fetchall()
+        tendances = session.query(
+            func.strftime('%Y-%W', Vente.timestamp).label("semaine"),
+            Vente.produit_id,
+            func.sum(Vente.quantite).label("total_hebdo")
+        ).group_by(
+            text("semaine"), Vente.produit_id
+        ).order_by(
+            text("semaine DESC")
+        ).limit(10).all()
+
         for ligne in tendances:
             print(
-                f"Semaine {ligne['semaine']} | Produit {ligne['produit_id']} : "
-                f"{ligne['total_hebdo']} ventes"
+                f"Semaine {ligne.semaine} | Produit {ligne.produit_id} : "
+                f"{ligne.total_hebdo} ventes"
             )
+
+    def get_out_of_stock(self):
+        """Retourne la liste des produits dont la quantité est à zéro."""
+        return self.dao.session.query(Produit).filter(Produit.quantite == 0).all()

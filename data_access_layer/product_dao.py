@@ -1,97 +1,53 @@
-"Data Access Object (DAO) pour gérer les opérations sur les produits dans la base de données."
-import sqlite3
-from data_access_layer.schema import create_tables
+"""Data Access Object (DAO) pour gérer les opérations sur les produits avec SQLAlchemy."""
 
+from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
+from data_access_layer.models import Produit, Vente
 
 class ProduitDAO:
     """Classe permettant les opérations CRUD sur les produits."""
 
-    def __init__(self, db_path="data_access_layer/produits.db"):
+    def __init__(self, session: Session):
         """
-        Initialise le DAO avec le chemin de la base de données.
-        :param db_path: Chemin vers le fichier de base de données SQLite.
+        Initialise le DAO avec une session SQLAlchemy.
+        :param session: Session SQLAlchemy active.
         """
-        self.conn = sqlite3.connect(db_path)
-        self.conn.row_factory = sqlite3.Row
-        self._create_tables()
-
-    def _create_tables(self):
-        """
-        Crée les tables nécessaires dans la base de données.
-        Cette méthode est appelée lors de l'initialisation du DAO.
-        """
-        create_tables(self.conn)
+        self.session = session
 
     def get_all(self):
-        """
-        Récupère tous les produits de la base de données.
-        :return: Liste de dictionnaires représentant les produits.
-        """
-        cursor = self.conn.execute("SELECT * FROM produits")
-        return [dict(row) for row in cursor.fetchall()]
+        """Récupère tous les produits."""
+        return self.session.query(Produit).all()
 
     def get_by_id(self, produit_id, magasin_id):
-        """
-        Récupère un produit par son ID et l'ID du magasin.
-        :param produit_id: ID du produit à récupérer.
-        :param magasin_id: ID du magasin auquel le produit appartient.
-        :return: Dictionnaire représentant le produit, ou None si non trouvé.
-        """
-        cursor = self.conn.execute(
-            "SELECT * FROM produits WHERE id = ? AND magasin_id = ?", (produit_id, magasin_id)
-        )
-        return cursor.fetchone()
+        """Récupère un produit par son ID et son magasin."""
+        return self.session.query(Produit).filter_by(id=produit_id, magasin_id=magasin_id).first()
 
     def rechercher(self, terme):
-        """
-        Recherche des produits par un terme dans l'ID, le nom ou la catégorie.
-        :param terme: Terme de recherche.
-        :return: Liste de dictionnaires représentant les produits correspondants.
-        """
-        cursor = self.conn.execute("""
-            SELECT * FROM produits
-            WHERE id LIKE ? OR nom LIKE ? OR categorie LIKE ?
-        """, (f"%{terme}%", f"%{terme}%", f"%{terme}%"))
-        return [dict(row) for row in cursor.fetchall()]
+        """Recherche des produits par un terme dans l'ID, le nom ou la catégorie."""
+        return self.session.query(Produit).filter(
+            or_(
+                Produit.id.like(f"%{terme}%"),
+                Produit.nom.like(f"%{terme}%"),
+                Produit.categorie.like(f"%{terme}%")
+            )
+        ).all()
 
-    def update(self, produit):
-        """
-        Met à jour un produit dans la base de données.
-        :param produit: Dictionnaire représentant le produit à mettre à jour.
-        """
-        self.conn.execute("""
-            UPDATE produits SET nom = ?, categorie = ?, prix = ?, quantite = ?
-            WHERE id = ? AND magasin_id = ?
-        """, (produit["nom"], produit["categorie"], produit["prix"],
-              produit["quantite"], produit["id"], produit["magasin_id"]))
-        self.conn.commit()
+    def update(self, produit: Produit):
+        """Met à jour un produit déjà attaché à la session."""
+        self.session.add(produit)
+        self.session.commit()
 
-    def insert(self, produit):
-        """
-        Insère un nouveau produit dans la base de données.
-        :param produit: Dictionnaire représentant le produit à insérer.
-        """
-        self.conn.execute("""
-            INSERT INTO produits (id, nom, categorie, prix, quantite, magasin_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (produit["id"], produit["nom"], produit["categorie"], produit["prix"],
-               produit["quantite"], produit["magasin_id"]))
-        self.conn.commit()
+    def insert(self, produit_dict):
+        """Insère un nouveau produit."""
+        nouveau = Produit(**produit_dict)
+        self.session.add(nouveau)
+        self.session.commit()
 
     def get_ventes_par_magasin(self):
-        """
-        Récupère le total des ventes par magasin.
-        :return: Dictionnaire avec l'ID du magasin comme clé et le total des ventes comme valeur.
-        """
-        cursor = self.conn.execute("""
-            SELECT magasin_id, SUM(quantite) as total
-            FROM ventes
-            GROUP BY magasin_id
-        """)
-        return {row["magasin_id"]: row["total"] for row in cursor.fetchall()}
+        """Retourne un dictionnaire du total des ventes par magasin."""
+        result = self.session.query(
+            Vente.magasin_id,
+            func.sum(Vente.quantite).label("total")
+        ).group_by(Vente.magasin_id).all()
 
-    def close(self):
-        """
-        Ferme la connexion à la base de données.
-        """
-        self.conn.close()
+        return {r.magasin_id: r.total for r in result}

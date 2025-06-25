@@ -1,4 +1,4 @@
-@startuml sequence_diagram_reapprovisionnement
+@startuml sequence_diagram_restock
 actor User
 participant "main.py" as Main
 participant "restock_service.py" as Restock
@@ -11,10 +11,12 @@ DAO --> Restock : produit_src
 Restock -> DAO : update(produit_src)
 Restock -> DAO : get_by_id(id, magasin_dst)
 DAO --> Restock : produit_dst ou None
+
 alt produit_dst existe
-  Restock -> DAO : update(produit_dst)
-else
-  Restock -> DAO : insert(nouveau_produit)
+    Restock -> DAO : update(produit_dst)
+else produit_dst est None
+    Restock -> DAO : insert(nouveau_produit)
 end
+
 Main --> User : confirmation
 @enduml

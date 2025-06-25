@@ -239,7 +239,7 @@ Ce système permet aux utilisateurs de gérer le stock et d’effectuer des opé
 
 ### Vue de cas d'utilisation
 
-![diagramme de cas d'utilisation](out/docs/UML/use_cases/use_cases.)
+![diagramme de cas d'utilisation](out/docs/UML/use_cases/VueCasUtilisation.png)
 
 ## Diagrammes de séquence (processus)
 

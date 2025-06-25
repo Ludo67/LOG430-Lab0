@@ -1,13 +1,21 @@
 @startuml sequence_diagram_tableau_bord
-actor Admin
-participant "main.py" as Main
-participant "reporting_service.py" as Reporting
-participant "product_dao.py" as DAO
+actor Utilisateur
+participant "main.py" as UI
+participant "ReportingService" as Reporting
+participant "ProduitDAO" as DAO
 
-Admin -> Main : input("Afficher tableau de bord")
-Main -> Reporting : tableau_de_bord()
+Utilisateur -> UI : Sélectionne "Tableau de bord"
+UI -> Reporting : tableau_de_bord()
+Reporting -> Reporting : Appelle rapport_ventes()
 Reporting -> DAO : get_ventes_par_magasin()
-DAO --> Reporting : stats
-Reporting --> Main : données tableau
-Main --> Admin : affiche rapport (CA, ruptures, surstock, tendances)
+DAO --> Reporting : [{ produit_id, total_vendu }, ...]
+Reporting -> Reporting : Calcule totaux et tendances
+
+Reporting -> Reporting : Appelle produits_en_rupture(seuil)
+Reporting -> DAO : rechercher produits avec quantite <= seuil
+DAO --> Reporting : [Produits en rupture]
+
+Reporting --> UI : Résumé ventes + produits en rupture
+UI -> Utilisateur : Affiche le tableau de bord
+
 @enduml

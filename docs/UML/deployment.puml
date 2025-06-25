@@ -1,16 +1,18 @@
-@startuml deployment
-node "Poste utilisateur" {
-  [Console Python]
+node "Poste développeur (VM Ubuntu)" {
+    node "Terminal CLI" {
+        artifact "main.py"
+        artifact "restock_service.py"
+        artifact "reporting_service.py"
+        artifact "stock_service.py"
+    }
+
+    node "Environnement Python (venv)" {
+        artifact "SQLAlchemy"
+        artifact "SQLite"
+    }
+
+    database "SQLite DB\n(produits.db)"
+    
+    "main.py" --> "SQLAlchemy"
+    "SQLAlchemy" --> "SQLite DB\n(produits.db)"
 }
-node "Conteneur Docker" {
-  folder "App" {
-    [main.py] --> [stock_service.py]
-    [main.py] --> [reporting_service.py]
-    [stock_service.py] --> [product_dao.py]
-    [reporting_service.py] --> [product_dao.py]
-  }
-  database "SQLite produits.db"
-}
-[product_dao.py] --> [SQLite produits.db]
-[Console Python] --> [main.py]
-@enduml
