@@ -9,6 +9,8 @@ disable=
     invalid-name,
     too-few-public-methods,
     duplicate-code
+disable=E0401
+
 
 [FORMAT]
 # Longueur maximale d'une ligne
