@@ -270,7 +270,22 @@ Installer un .venv. voir (https://packaging.python.org/en/latest/guides/installi
 ### Docker commands to build (terminal)
 `docker build -t my-app .`
 `docker-compose up`
-`docker run -it my-app`
+`docker run -p 8000:8000 my-app`
+
+### Acceder au endpoints et doc
+`http://localhost:8000/docs`
+
+### Lint le code
+Avec Windows
+`Get-ChildItem -Recurse -Filter *.py -File |`
+    `Where-Object { $_.FullName -notlike "*\.venv\*" -and $_.FullName -notlike "*site-packages*" } |`
+    `ForEach-Object {`
+       ` Write-Host "🔍 Linting $($_.FullName)"`
+        `pylint $_.FullName`
+    `}`
+
+Linux / Mac
+`pylint $(find . -name "*.py")`
 
 ### Executer les tests unitaires
 

@@ -49,10 +49,10 @@ class ReportingService:
         return [p.__dict__ for p in produits]
 
     def generer_tableau_de_bord(self):
-        """Affiche le tableau de bord complet avec plusieurs rapports."""
+        """Retourne le tableau de bord consolidé sous forme de dictionnaire."""
         session: Session = self.dao.session
 
-        print("\n--- Rapport consolidé des ventes ---")
+        # Rapport des ventes
         ventes = session.query(
             Produit.id,
             Produit.nom,
@@ -67,33 +67,45 @@ class ReportingService:
             (Vente.magasin_id == Produit.magasin_id)
         ).group_by(Produit.id, Produit.magasin_id).all()
 
-        for produit in ventes:
-            print(
-                f"[{produit.magasin_id}] {produit.nom} | "
-                f"{produit.ventes} ventes | CA: {produit.chiffre_affaires:.2f} $"
-            )
+        ventes_list = [
+            {
+                "produit_id": v.id,
+                "nom": v.nom,
+                "magasin_id": v.magasin_id,
+                "ventes": v.ventes,
+                "chiffre_affaires": float(v.chiffre_affaires),
+                "prix": float(v.prix),
+                "categorie": v.categorie,
+            } for v in ventes
+        ]
 
-        print("\n--- Produits en rupture de stock ---")
         ruptures = session.query(Produit).filter(Produit.quantite <= 0).all()
-        for produit in ruptures:
-            print(f"[{produit.magasin_id}] {produit.nom} (id={produit.id})")
+        ruptures_list = [
+            {
+                "produit_id": p.id,
+                "nom": p.nom,
+                "magasin_id": p.magasin_id
+            } for p in ruptures
+        ]
 
-        print("\n--- Produits en surstock ---")
         surplus = session.query(Produit).filter(Produit.quantite > 30).all()
-        for produit in surplus:
-            print(f"[{produit.magasin_id}] {produit.nom} ({produit.quantite} en stock)")
+        surplus_list = [
+            {
+                "produit_id": p.id,
+                "nom": p.nom,
+                "magasin_id": p.magasin_id,
+                "quantite": p.quantite
+            } for p in surplus
+        ]
 
-        print("\n--- Chiffre d'affaires global ---")
-        total = session.query(
+        chiffre_affaires_total = session.query(
             func.sum(Vente.quantite * Produit.prix)
         ).join(
             Produit,
             (Vente.produit_id == Produit.id) &
             (Vente.magasin_id == Produit.magasin_id)
         ).scalar() or 0
-        print(f"\n💰 Chiffre d'affaires total : {total:.2f} $")
 
-        print("\n--- Tendances hebdomadaires ---")
         tendances = session.query(
             func.strftime('%Y-%W', Vente.timestamp).label("semaine"),
             Vente.produit_id,
@@ -104,11 +116,22 @@ class ReportingService:
             text("semaine DESC")
         ).limit(10).all()
 
-        for ligne in tendances:
-            print(
-                f"Semaine {ligne.semaine} | Produit {ligne.produit_id} : "
-                f"{ligne.total_hebdo} ventes"
-            )
+        tendances_list = [
+            {
+                "semaine": ligne.semaine,
+                "produit_id": ligne.produit_id,
+                "total_hebdo": ligne.total_hebdo
+            } for ligne in tendances
+        ]
+
+        return {
+            "ventes": ventes_list,
+            "ruptures": ruptures_list,
+            "surplus": surplus_list,
+            "chiffre_affaires_total": float(chiffre_affaires_total),
+            "tendances_hebdomadaires": tendances_list
+        }
+
 
     def get_out_of_stock(self):
         """Retourne la liste des produits dont la quantité est à zéro."""
