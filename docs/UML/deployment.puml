@@ -1,18 +1,29 @@
-node "Poste développeur (VM Ubuntu)" {
-    node "Terminal CLI" {
-        artifact "main.py"
-        artifact "restock_service.py"
-        artifact "reporting_service.py"
-        artifact "stock_service.py"
-    }
+@startuml deployment
 
-    node "Environnement Python (venv)" {
-        artifact "SQLAlchemy"
-        artifact "SQLite"
-    }
+node "Poste développeur (local)" {
+  node "FastAPI + Uvicorn" {
+    component "main.py"
+    component "stock_route"
+    component "restock_routes"
+    component "reporting_routes"
+    component "auth"
+  }
 
-    database "SQLite DB\n(produits.db)"
-    
-    "main.py" --> "SQLAlchemy"
-    "SQLAlchemy" --> "SQLite DB\n(produits.db)"
+  node "VirtualEnv (.venv)" {
+    artifact "FastAPI"
+    artifact "Uvicorn"
+    artifact "SQLAlchemy"
+    artifact "httpx"
+    artifact "pytest"
+  }
+
+  database "SQLite (produits.db)"
 }
+
+"stock_route" --> "FastAPI"
+"restock_routes" --> "FastAPI"
+"reporting_routes" --> "FastAPI"
+"FastAPI" --> "SQLAlchemy"
+"SQLAlchemy" --> "SQLite (produits.db)"
+
+@enduml

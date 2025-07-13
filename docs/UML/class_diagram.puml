@@ -1,4 +1,4 @@
-@startuml vue_logique
+@startuml class_diagram
 
 package "data_access_layer" {
   class ProduitDAO {
@@ -13,16 +13,16 @@ package "data_access_layer" {
 
 package "service_layer" {
   class StockService {
+    +lister_stock()
     +rechercher_produit(terme)
     +enregistrer_vente(id, quantite, magasin_id)
     +annuler_vente(id, quantite, magasin_id)
-    +lister_stock()
   }
 
   class ReportingService {
-    +tableau_de_bord()
     +rapport_ventes()
     +produits_en_rupture(seuil)
+    +tableau_de_bord()
   }
 
   class RestockService {
@@ -30,18 +30,20 @@ package "service_layer" {
   }
 }
 
-package "presentation_layer" {
-  class Main {
-    +main()
-  }
+package "api" {
+  class stock_route
+  class restock_routes
+  class reporting_routes
+  class auth
+  class schemas
 }
 
-Main --> StockService
-Main --> ReportingService
-Main --> RestockService
+"stock_route" --> StockService
+"restock_routes" --> RestockService
+"reporting_routes" --> ReportingService
 
 StockService --> ProduitDAO
-ReportingService --> ProduitDAO
 RestockService --> ProduitDAO
+ReportingService --> ProduitDAO
 
 @enduml

@@ -37,11 +37,25 @@ class ProduitDAO:
         self.session.add(produit)
         self.session.commit()
 
-    def insert(self, produit_dict):
-        """Insère un nouveau produit."""
-        nouveau = Produit(**produit_dict)
-        self.session.add(nouveau)
+    def insert(self, produit: Produit | dict):
+        if isinstance(produit, dict):
+            produit = Produit(**produit)
+        self.session.add(produit)
         self.session.commit()
+
+
+    def update_product(self, produit_id: int, magasin_id: int, champs: dict):
+        produit = self.get_by_id(produit_id, magasin_id)
+        if not produit:
+            return None
+
+        for key, value in champs.items():
+            if hasattr(produit, key):
+                setattr(produit, key, value)
+
+        self.session.commit()
+        return produit
+
 
     def get_ventes_par_magasin(self):
         """Retourne un dictionnaire du total des ventes par magasin."""

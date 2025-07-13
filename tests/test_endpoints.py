@@ -5,7 +5,6 @@ client = TestClient(app)
 API_KEY = "topsecret123"
 HEADERS = {"X-API-Key": API_KEY}
 
-
 def test_get_all_stock():
     response = client.get("/stock/", headers=HEADERS)
     assert response.status_code == 200
@@ -53,5 +52,21 @@ def test_get_ruptures():
     assert response.status_code == 200
 
 def test_get_dashboard():
-    response = client.get("/reporting/dashboard", headers=HEADERS)
-    assert response.status_code == 200
+    with TestClient(app) as client:
+        response = client.get("/reporting/dashboard", headers=HEADERS)
+        assert response.status_code == 200
+
+# def test_maj_produits():
+#     client.post("/stock/annuler_vente", json={
+#         "produit_id": "1",
+#         "quantite": 1,
+#         "magasin_id": 1
+#     }, headers=HEADERS)
+
+#     response = client.put(
+#         "/stock/1/magasin/1",
+#         json={"quantite": 50, "prix": 49.99},
+#         headers=HEADERS
+#     )
+
+#     assert response.status_code == 200

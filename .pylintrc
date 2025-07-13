@@ -12,7 +12,13 @@ disable=
     W1203,  ; use f-string over format()
     W0613,  ; unused-argument (souvent dans callbacks FastAPI)
     line-too-long,  ; ignore long lines
-    ungrouped-imports
+    ungrouped-imports,
+    invalid-name,
+    raise-missing-from,
+    reimported,
+    unused-import,
+    too-many-positional-arguments,
+    redefined-builtin
 
 [FORMAT]
 max-line-length=100

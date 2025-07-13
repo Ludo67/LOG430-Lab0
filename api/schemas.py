@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 class VenteRequest(BaseModel):
@@ -15,3 +16,17 @@ class TransfertRequest(BaseModel):
     quantite: int
     magasin_source: int
     magasin_destination: int
+
+class MiseAJourProduitDTO(BaseModel):
+    nom: Optional[str]
+    categorie: Optional[str]
+    prix: Optional[float]
+    quantite: Optional[int]
+
+class NouveauProduitDTO(BaseModel):
+    id: int
+    nom: str
+    categorie: str
+    quantite: int
+    prix: float
+    magasin_id: int

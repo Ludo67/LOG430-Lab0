@@ -1,8 +1,16 @@
 """Service de génération de rapports et de tableau de bord avec SQLAlchemy."""
 
+import logging
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from data_access_layer.models import Produit, Vente
+
+logging.basicConfig(
+    level=logging.INFO,  # Change à DEBUG ou ERROR selon les besoins
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 
 class ReportingService:
@@ -18,11 +26,13 @@ class ReportingService:
 
         if not ventes:
             print("Aucune vente enregistrée.")
+            logger.warning("Aucune vente enregistrée.")
             return
 
         print("\n=== Ventes par magasin ===")
         for magasin, total in ventes.items():
             print(f"Magasin {magasin}: {total} ventes")
+        logger.info("Affichage du tableau de bord des ventes par magasin.")
 
     def rapport_ventes(self):
         """Retourne la liste des ventes groupées par magasin et produit."""
@@ -33,6 +43,7 @@ class ReportingService:
             func.sum(Vente.quantite).label("total_vendu")
         ).group_by(Vente.magasin_id, Vente.produit_id).all()
 
+        logger.info("Génération du rapport des ventes par magasin et produit.")
         return [
             {
                 "magasin_id": r.magasin_id,
@@ -46,6 +57,7 @@ class ReportingService:
         """Retourne les produits dont le stock est inférieur ou égal au seuil."""
         session: Session = self.dao.session
         produits = session.query(Produit).filter(Produit.quantite <= seuil).all()
+        logger.info(f"Récupération des produits en rupture de stock (seuil: {seuil}).")
         return [p.__dict__ for p in produits]
 
     def generer_tableau_de_bord(self):
@@ -124,6 +136,8 @@ class ReportingService:
             } for ligne in tendances
         ]
 
+        logger.info("Génération du tableau de bord consolidé.")
+
         return {
             "ventes": ventes_list,
             "ruptures": ruptures_list,
@@ -135,4 +149,5 @@ class ReportingService:
 
     def get_out_of_stock(self):
         """Retourne la liste des produits dont la quantité est à zéro."""
+        logger.info("Récupération des produits en rupture de stock (quantité = 0).")
         return self.dao.session.query(Produit).filter(Produit.quantite == 0).all()

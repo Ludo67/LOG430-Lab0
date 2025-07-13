@@ -1,4 +1,11 @@
+import logging
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+from redis import asyncio as aioredis
+import redis.asyncio as redis
 from fastapi.middleware.cors import CORSMiddleware
 from data_access_layer.database import SessionLocal
 from data_access_layer.product_dao import ProduitDAO
@@ -9,7 +16,22 @@ from api import stock_route, restock_routes, reporting_routes
 
 app = FastAPI()
 
-# Autorise tous les domaines (en développement uniquement !)
+@app.on_event("startup")
+async def startup():
+    redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
+    FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+
+instrumentator = Instrumentator()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+Instrumentator().instrument(app).expose(app)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Remplacez par ["https://monclient.com"] en production

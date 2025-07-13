@@ -1,23 +1,41 @@
 @startuml implementation
-package "Service Layer" {
-  [StockService]
-  [RestockService]
-  [ReportingService]
+
+package "api" {
+  [stock_route.py]
+  [restock_routes.py]
+  [reporting_routes.py]
+  [auth.py]
 }
 
-package "Data Access Layer" {
-  [ProduitDAO]
-  [Base SQLAlchemy]
+package "service_layer" {
+  [stock_service.py]
+  [restock_service.py]
+  [reporting_service.py]
 }
 
-package "Presentation Layer" {
+package "data_access_layer" {
+  [product_dao.py]
+  [models.py]
+  [database.py]
+}
+
+package "presentation_layer" {
   [main.py]
 }
 
-[main.py] --> [StockService]
-[main.py] --> [RestockService]
-[main.py] --> [ReportingService]
-[StockService] --> [ProduitDAO]
-[ProduitDAO] --> [Base SQLAlchemy]
+[main.py] --> [stock_route.py]
+[main.py] --> [restock_routes.py]
+[main.py] --> [reporting_routes.py]
+
+[stock_route.py] --> [stock_service.py]
+[restock_routes.py] --> [restock_service.py]
+[reporting_routes.py] --> [reporting_service.py]
+
+[stock_service.py] --> [product_dao.py]
+[restock_service.py] --> [product_dao.py]
+[reporting_service.py] --> [product_dao.py]
+
+[product_dao.py] --> [models.py]
+[models.py] --> [database.py]
 
 @enduml

@@ -1,17 +1,26 @@
-@startuml VueCasUtilisation
+@startuml use_cases
+
 actor Vendeur
 actor Gestionnaire
 
-rectangle "application"{
-  usecase "Rechercher produit" as UC1
-  usecase "Enregistrer vente" as UC2
-  usecase "Annuler vente" as UC3
-  usecase "Réapprovisionner" as UC4
-  usecase "Générer rapport" as UC5
+rectangle "Application FastAPI" {
+  usecase "Lister produits en stock"
+  usecase "Rechercher un produit"
+  usecase "Enregistrer une vente"
+  usecase "Annuler une vente"
+  usecase "Réapprovisionner un magasin"
+  usecase "Générer un rapport de ventes"
+  usecase "Afficher les ruptures"
+  usecase "Afficher le tableau de bord"
 }
-Vendeur --> UC1
-Vendeur --> UC2
-Vendeur --> UC3
-Gestionnaire --> UC4
-Gestionnaire --> UC5
+
+Vendeur --> "Lister produits en stock"
+Vendeur --> "Rechercher un produit"
+Vendeur --> "Enregistrer une vente"
+Vendeur --> "Annuler une vente"
+Gestionnaire --> "Réapprovisionner un magasin"
+Gestionnaire --> "Générer un rapport de ventes"
+Gestionnaire --> "Afficher les ruptures"
+Gestionnaire --> "Afficher le tableau de bord"
+
 @enduml

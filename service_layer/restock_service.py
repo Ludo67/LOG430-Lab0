@@ -1,8 +1,16 @@
 """Service de gestion du réapprovisionnement entre magasins."""
 
+import logging
 from sqlalchemy.orm import Session
 from data_access_layer.product_dao import ProduitDAO
 from data_access_layer.models import Produit
+
+logging.basicConfig(
+    level=logging.INFO,  # Change à DEBUG ou ERROR selon les besoins
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 
 class RestockService:
@@ -15,6 +23,7 @@ class RestockService:
 
     def get_stock_par_magasin(self, magasin_id: int):
         """Retourne les produits d'un magasin donné."""
+        logger.info(f"Récupération du stock pour le magasin ID: {magasin_id}")
         return self.session.query(Produit).filter_by(magasin_id=magasin_id).all()
 
     def transferer_stock(
@@ -41,6 +50,7 @@ class RestockService:
         ).first()
 
         if not source or source.quantite < quantite:
+            logger.error(f"Stock insuffisant pour le produit ID: {produit_id} dans le magasin ID: {magasin_source}")
             raise ValueError("Stock insuffisant dans le magasin source")
 
         # Décrémenter le stock du magasin source
@@ -64,4 +74,5 @@ class RestockService:
             )
             self.session.add(nouveau_produit)
 
+        logger.info(f"Transfert de {quantite} unités du produit ID: {produit_id} du magasin ID: {magasin_source} vers le magasin ID: {magasin_cible}")
         self.session.commit()
