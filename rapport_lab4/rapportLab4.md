@@ -11,7 +11,7 @@ Le P95 est mesuré à 1 seconde, ce qui est relativement élevé.
 
 Conséquence : Forte latence → mauvaise expérience utilisateur + surcharge potentielle du serveur.
 
-✅ Améliorations suggérées (sans ajouter de ressources) :
+Améliorations suggérées (sans ajouter de ressources) :
 
 Ajouter des index sur les colonnes utilisées dans les filtres ou conditions WHERE (probablement produit_id, magasin_id).
 
@@ -28,7 +28,7 @@ Les graphiques montrent aussi un fort pourcentage de requêtes échouées (Perce
 
 Conséquence : Saturation du backend, bugs applicatifs ou logique métier fragile.
 
-✅ Améliorations suggérées :
+Améliorations suggérées :
 
 Inspecter les exceptions levées dans les endpoints FastAPI.
 
@@ -45,7 +45,7 @@ Utilisation mémoire relativement stable (entre 72 MiB et 80 MiB).
 
 Conséquence : Pas de saturation actuelle → bonne gestion mémoire et CPU.
 
-✅ Améliorations suggérées :
+Améliorations suggérées :
 
 Pas de besoin urgent ici, mais :
 
@@ -60,253 +60,275 @@ Pics de trafic observés (jusqu’à 3.76 req/s).
 
 Les endpoints les plus sollicités sont /stock/create et /stock/update.
 
-✅ Améliorations suggérées :
+Améliorations suggérées :
 
 Prévoir du throttling ou du rate limiting si le service est exposé publiquement.
 
 Préparer une stratégie de mise à l’échelle si le trafic augmente.
 
-# 🔧 Test de tolérance aux pannes — Analyse
+# Test de tolérance aux pannes — Analyse
+## 1. Continuité du service
 
-## ✅ 1. Continuité du service
+Graphique : http_requests_total
 
-**Graphique :** `http_requests_total`
+Le graphique montre que les requêtes HTTP vers l’endpoint /metrics continuent à être traitées même après l’interruption d’une des instances FastAPI (log430-stock-2).
 
-![Graphique](rapport_lab4\panne images\http_requests_total.png)
+Conclusion : Le service est resté disponible tout au long du test. Aucune coupure n’a été observée.
 
-- 📈 Même après l'arrêt d'une instance (`log430-stock-2:8000` ou `log430-stock-3:8000`), les deux autres continuent de recevoir des requêtes.
-- 🟢 **Conclusion** : Le service est resté **disponible sans interruption**.
+## 🔁 2. Redirection par le Load Balancer (NGINX)
+Comportement observé :
 
----
+Le trafic a été automatiquement redirigé vers les autres instances (log430-stock-1, log430-stock-3) après l’indisponibilité d’une instance.
 
-## 🔁 2. Redirection par le Load Balancer
+Le Load Balancer NGINX a continué de distribuer les requêtes sans action manuelle.
 
-**Observation générale :**
-
-- Le trafic est redistribué **automatiquement** entre les autres instances (`log430-stock-1`, `log430-stock-3`).
-- Le répartiteur **NGINX** redirige les requêtes **sans intervention manuelle**.
-
-✔️ **Résultat** : Le Load Balancer fonctionne comme prévu.
-
----
+Résultat : Le mécanisme de répartition fonctionne correctement et dynamiquement.
 
 ## ⚠️ 3. Impact sur les performances
-
-### a) `process_cpu_seconds_total`
-
-![Graphique](rapport_lab4\panne images\cpu.png)
-
-- 🧠 **CPU** des instances restantes augmente légèrement.
-- 📌 Comportement attendu : la charge est **répartie sur moins d’instances**.
-
-### b) `process_resident_memory_bytes`
-
-![Graphique](rapport_lab4\panne images\memory.png)
-
-- 🧮 **Mémoire RAM** reste **stable**.
-- 🔒 Aucune fuite mémoire détectée.
-
-### c) `rate(http_request_duration_seconds_bucket[1m])`
-
-![Graphique](rapport_lab4\panne images\request_duration_rate.png)
-
-- 📉 Pas de **hausse significative** de la latence.
-- 🟢 Aucune augmentation notable des **erreurs**.
-
----
-
-## ✅ Conclusion
-
-| Critère             | Résultat                         |
-|---------------------|----------------------------------|
-| Accessibilité       | ✅ Service disponible             |
-| Load Balancer       | ✅ Répartition automatique        |
-| CPU / RAM           | ⚠️ Charge accrue mais stable     |
-| Latence / Erreurs   | ✅ Aucune hausse significative    |
-| Résilience globale  | 🟢 Test de tolérance réussi       |
+### a) Utilisation CPU (process_cpu_seconds_total)
 
 
-# Rapport comparatif des performances selon le nombre d’instances
+Une augmentation modérée de l'utilisation CPU est visible sur les instances restantes après la panne.
 
+Cela montre une redistribution de charge normale, sans surcharge.
+
+### b) Utilisation mémoire (process_resident_memory_bytes)
+
+
+La mémoire utilisée par chaque instance reste relativement stable.
+
+Aucun signe de fuite mémoire ni de montée en charge excessive.
+
+### c) Latence des requêtes (rate(http_request_duration_seconds_bucket[1m]))
+
+
+Le taux de durée des requêtes reste constant malgré la défaillance.
+
+Aucune latence anormale ni augmentation d’erreurs n’a été détectée.
+
+# 📊 Rapport comparatif des performances selon le nombre d’instances
 ## 1. Comparaison des métriques
-
-| Nombre d’instances | Latence moyenne (ms) | Requêtes par seconde | Taux d’erreurs (%) | Saturation CPU (%) |
-|--------------------|-----------------------|------------------------|---------------------|----------------------|
-| 1                  | 168.1                  | 57.8                  | 72                  | 60                   |
-| 2                  | 87.2                   | 112.4                 | 55                  | 52                   |
-| 3                  | 64.8                   | 139.9                 | 43                  | 48                   |
-| 4                  | 58.3                   | 148.2                 | 39                  | 46                   |
+Nombre d’instances	Latence moyenne (ms)	Requêtes par seconde	Taux d’erreurs (%)	Saturation CPU (%)
+1	239.4	64.9	82	57.7
+2	143.2	109.6	70	56.3
+3	101.6	135.6	54	51.5
+4	76.4	146.9	43	48.8
 
 ## 2. Analyse
+### Latence moyenne
+Réduction constante au fur et à mesure que le nombre d’instances augmente.
 
-- **Latence moyenne** :
-  - Diminue régulièrement (300 ms avec 1 instance, 100 ms avec 4).
-  - Le système devient plus réactif avec la montée en charge horizontale.
+Amélioration notable de la réactivité du système :
 
-- **Débit (Requêtes/seconde)** :
-  - Augmentation nette : de 25 RPS à 85 RPS.
-  - Montre une meilleure capacité à traiter des requêtes simultanées.
+de 239.4 ms (1 instance) à 76.4 ms (4 instances).
 
-- **Taux d’erreurs** :
-  - Réduction importante : de 8 % à 1 %.
-  - Indique une meilleure résilience du système.
+### Débit (Requêtes/seconde)
+Augmentation nette de la capacité de traitement :
 
-- **Saturation CPU** :
-  - Diminue fortement : de 90 % à 40 %.
-  - Preuve d’une meilleure répartition de charge entre les instances.
+de 64.9 RPS à 146.9 RPS.
 
-## 3. Graphique comparatif
+Preuve que le système scale efficacement horizontalement.
 
-Les graphiques suivants illustrent l’évolution des performances (axe X : nombre d’instances ; axe Y : métriques).
+### Taux d’erreurs
+Diminution continue du pourcentage d'erreurs :
 
-- **Latence moyenne**
-- **Requêtes par seconde**
-- **Taux d’erreurs**
-- **Utilisation CPU**
+de 82 % à 43 %, soit près de moitié moins.
 
----
+Le système devient plus résilient à la montée en charge.
 
-**Conclusion** : L'ajout progressif d’instances améliore significativement la performance globale du système, tout en réduisant les erreurs et la saturation des ressources.
+### Utilisation CPU
+Saturation moyenne du CPU diminue :
+
+de 57.7 % à 48.8 %.
+
+La charge est mieux répartie à mesure que les instances sont ajoutées.
+
+## 3. Synthèse graphique 
+
+![diagramme cpu](rapport_lab4\instances\graphs\updated\cpu.png)
+![diagramme err](rapport_lab4\instances\graphs\updated\err.png)
+![diagramme latence](rapport_lab4\instances\graphs\updated\latence.png)
+![diagramme reqsec](rapport_lab4\instances\graphs\updated\reqsec.png)
+
+
+### Conclusion
+Critère	Résultat
+Réactivité: Améliorée
+Capacité de traitement: Nettement accrue
+Résilience (erreurs):  Moins d’erreurs
+Saturation CPU: Encore notable mais en baisse
+Scalabilité globale: Très satisfaisante
+
+Recommandation : Utiliser au moins 3 instances pour garantir un bon équilibre entre performance, résilience et efficacité.
 
 # Rapport comparatif : Stratégies de répartition de charge
-
 ## Objectif
+Ce rapport compare plusieurs stratégies de répartition de charge (load balancing) dans une architecture à base de FastAPI + NGINX avec plusieurs instances. Les stratégies testées sont :
 
-Ce rapport vise à comparer différentes stratégies de répartition de charge (load balancing) mises en œuvre avec NGINX dans une architecture FastAPI répartie sur plusieurs instances. Les stratégies évaluées sont :
+Round Robin
 
-- Round Robin
-- Least Connections
-- IP Hash
-- Weighted Round Robin
+Least Connections
+
+IP Hash
+
+Weighted Round Robin
 
 ## Méthodologie
+Des tests de charge ont été réalisés sur l’endpoint /reporting/dashboard via un client HTTP (wrk) pendant 60 secondes, avec 12 threads et 200 connexions. Chaque test a été réalisé avec la stratégie NGINX correspondante.
 
-Des tests de charge ont été effectués à l'aide de `wrk` sur l'endpoint `/reporting/dashboard` à travers un répartiteur NGINX configuré avec chaque stratégie. Les métriques suivantes ont été observées :
+Les métriques retenues :
 
-- Requêtes par seconde (RPS)
-- Latence moyenne
-- Saturation CPU et mémoire
-- Nombre de requêtes réussies
-- Résilience en cas de panne
+Requêtes par seconde (RPS)
 
-## Résultats
+Latence moyenne
 
-### 📊 Round Robin
+Taux d’erreurs
 
-- **RPS** : 1061
-- **Latence moyenne** : 22.7ms
-- **Erreurs** : 0
-- **Répartition** : Équilibrée entre les 3 instances
-- **Résilience** : Fonctionne correctement après la coupure d'une instance
+Répartition de la charge
 
-### 🔁 Least Connections
+Tolérance aux pannes
 
-- **RPS** : 1134
-- **Latence moyenne** : 21.1ms
-- **Erreurs** : 0
-- **Répartition** : Favorise les instances peu chargées
-- **Résilience** : Très bonne — redistribution rapide de la charge
+### Résultats
+#### Round Robin
+Requêtes/sec : 1086.25
 
-### 🔒 IP Hash
+Latence moyenne : 41.69 ms
 
-- **RPS** : 963
-- **Latence moyenne** : 23.8ms
-- **Erreurs** : 0
-- **Répartition** : Affinité par client, moins équilibrée
-- **Résilience** : Moins flexible en cas de panne (sessions liées à une instance)
+Taux d'erreur : 0 %
 
-### ⚖️ Weighted Round Robin
+Répartition : Très équilibrée entre les instances
 
-- **RPS** : 1092
-- **Latence moyenne** : 21.5ms
-- **Erreurs** : 0
-- **Répartition** : Pondérée selon les capacités configurées
-- **Résilience** : Bonne si pondérations bien calibrées
+Résilience : Bonne — l’algorithme continue la répartition même après perte d’une instance
+
+#### Least Connections
+Requêtes/sec : 1152.63
+
+Latence moyenne : 38.19 ms
+
+Taux d'erreur : 0 %
+
+Répartition : Favorise les serveurs moins occupés, ce qui améliore la réactivité
+
+Résilience : Excellente — redistribution rapide de la charge
+
+#### IP Hash
+Requêtes/sec : 956.13
+
+Latence moyenne : 47.72 ms
+
+Taux d'erreur : 0 %
+
+Répartition : Basée sur l'adresse IP client (moins équilibrée)
+
+Résilience : Faible — les clients liés à une instance tombée ne sont pas redirigés automatiquement
+
+#### Weighted Round Robin
+Requêtes/sec : 1109.41
+
+Latence moyenne : 39.68 ms
+
+Taux d'erreur : 0 %
+
+Répartition : Pondérée selon les poids définis pour chaque instance
+
+Résilience : Bonne — dépend des poids et de leur ajustement dynamique
 
 ## Analyse comparative
-
-| Stratégie             | RPS  | Latence Moy. | Répartition         | Résilience | Remarques                                      |
-|-----------------------|------|---------------|----------------------|------------|-----------------------------------------------|
-| Round Robin           | 1061 | 22.7 ms       | Très équilibrée      | Bonne      | Simple, efficace dans la majorité des cas     |
-| Least Connections     | 1134 | 21.1 ms       | Basée sur la charge  | Excellente | Idéale pour des workloads variables           |
-| IP Hash               | 963  | 23.8 ms       | Fixée par client     | Moyenne    | Risque si l’instance liée échoue              |
-| Weighted Round Robin  | 1092 | 21.5 ms       | Personnalisable      | Bonne      | Utile si les serveurs n’ont pas les mêmes ressources |
+Stratégie	RPS	Latence Moy.	Répartition	Résilience	Remarques techniques
+Round Robin	1086.25	41.69 ms	Très équilibrée	Bonne	Facile à implémenter, bon comportement global
+Least Connections	1152.63	38.19 ms	Favorise les moins chargés	Excellente	Performant pour des charges irrégulières
+IP Hash	956.13	47.72 ms	Par IP client (fixe)	Faible	Moins résilient, utile pour affinité session
+Weighted Round Robin	1109.41	39.68 ms	Basée sur poids	Bonne	Nécessite bon réglage des poids
 
 ## Conclusion
+Meilleure performance globale : Least Connections
 
-- Pour une charge équilibrée standard et une bonne simplicité : **Round Robin** reste un bon choix.
-- Pour une efficacité maximale sous des charges fluctuantes : **Least Connections** est recommandé.
-- **IP Hash** convient si l’affinité client est nécessaire (ex: sessions), mais compromet la résilience.
-- **Weighted Round Robin** est performant si les capacités des instances varient et sont bien définies.
+Plus simple et fiable : Round Robin
+
+Affinité client : IP Hash, mais à éviter sans tolérance intégrée
+
+Scénarios hétérogènes : Weighted Round Robin
 
 ## Recommandations
+Utiliser Least Connections si vos services ont des temps de traitement variables ou si la réactivité est cruciale.
 
-- Préférer **Least Connections** pour des scénarios dynamiques ou critiques.
-- Éviter **IP Hash** sauf nécessité fonctionnelle spécifique.
-- Toujours tester les stratégies avec des scénarios de pannes pour garantir la tolérance aux défaillances.
+Préférer Round Robin dans des scénarios simples, stables ou éducatifs.
 
+Éviter IP Hash, sauf si la session utilisateur l’impose.
 
+Bien configurer les poids si vous utilisez Weighted Round Robin (ex : pour des serveurs avec CPU différents).
 
 # Analyse comparative de l’impact du cache Redis sur les performances
+## Objectif
+Évaluer l'effet de l’introduction d’un cache Redis sur les performances globales d’un système FastAPI déployé sur 3 instances derrière un load balancer NGINX.
 
-## 1. Introduction
+## Contexte de test
+Instances FastAPI : 3 (log430-stock-[1-3])
 
-Dans ce rapport, nous comparons les performances de notre système FastAPI avec et sans cache Redis, sur trois instances en parallèle avec NGINX en tant que Load Balancer. Nous utilisons les mêmes tests de charge que ceux appliqués précédemment aux stratégies de répartition Round Robin et Least Connections.
+Répartition de charge : Round Robin (NGINX)
 
-## 2. Environnement de test
+Endpoints testés :
 
-- **Nombre d’instances FastAPI :** 3  
-- **Load Balancer :** NGINX (Round Robin)  
-- **Tests de charge :**  
-  - `test_consultation_stock.js`  
-  - `test_maj_produits.js`  
-  - `test_rapport_consolide.js`  
-- **Instrumentation :** Prometheus + Grafana  
-- **Endpoints avec cache Redis :**  
-  - `GET /reporting/dashboard`  
-  - `GET /restock/stock_par_magasin`  
-  - `POST /stock/create`  
-  - `PUT /stock/update`  
+GET /reporting/dashboard
 
-## 3. Résultats avant cache
+GET /restock/stock_par_magasin
 
-| Critère                      | Valeur Observée |
-|-----------------------------|------------------|
-| Requêtes par seconde        | ~190             |
-| Latence moyenne             | 120 ms           |
-| Utilisation CPU moyenne     | 72 %             |
-| Utilisation mémoire moyenne | 480 Mo           |
+POST /stock/create
 
-## 4. Résultats après ajout de cache Redis
+PUT /stock/update
 
-| Critère                      | Valeur Observée |
-|-----------------------------|------------------|
-| Requêtes par seconde        | **~310**         |
-| Latence moyenne             | **80 ms**        |
-| Utilisation CPU moyenne     | **51 %**         |
-| Utilisation mémoire moyenne | **360 Mo**       |
+Outils : Prometheus + Grafana
 
-## 5. Analyse comparative
+Durée de test : 1 minute par scénario
 
-| Critère            | Avant Cache | Après Cache | Gain estimé  |
-|--------------------|-------------|-------------|--------------|
-| Requêtes/sec       | ~190        | ~310        | **+63 %**    |
-| Latence moyenne    | 120 ms      | 80 ms       | **-33 %**    |
-| Utilisation CPU    | 72 %        | 51 %        | **-21 pts**  |
-| Utilisation mémoire| 480 Mo      | 360 Mo      | **-25 %**    |
+Charge simulée : mixte lecture/écriture
 
-**Commentaires :**
-- Le cache Redis a un **impact direct très positif** sur les performances de consultation (`GET`), mais également indirect sur les écritures (`POST`, `PUT`) qui invalident ensuite les caches.
-- La réduction de la charge CPU permet un meilleur **scaling horizontal**.
-- Les écritures ne sont pas elles-mêmes accélérées, mais la consultation est beaucoup plus rapide.
+## Résultats observés
+Métrique	Sans cache	Avec cache Redis	Variation
+Requêtes par seconde (RPS)	241.8	306.6	🟢 +26.8 %
+Latence moyenne (ms)	109.6	92.3	🟢 -15.8 %
+CPU moyen (process_cpu)	75 % env.	59 % env.	🟢 -16 pts
+Mémoire moyenne (RAM)	570 MiB	490 MiB	🟢 -14 %
+Taux d'erreurs (%)	0	0	✅ Stable
 
-## 6. Recommandations
+## Analyse
+Amélioration notable du débit (+26.8 %)
 
-- **Conserver le cache Redis activé** sur les endpoints stratégiques.
-- Ajouter un mécanisme d’invalidation/réactualisation du cache après écriture.
-- Étendre la mise en cache à d’autres endpoints critiques ou calculés si nécessaire.
-- Monitorer la taille du cache et les taux de hit/miss avec Grafana pour optimiser la stratégie TTL.
+Le cache permet d’éliminer une partie importante des calculs redondants.
 
-## 7. Conclusion
+Moins de requêtes vers la base de données → plus de bande passante pour les autres requêtes.
 
-L’intégration de Redis comme cache applicatif a permis de **significativement améliorer les performances** en consultation, de réduire la latence, la charge processeur et la consommation mémoire. C’est une **solution simple, efficace et extensible**, recommandée pour tout environnement distribué ou à haute charge.
+Latence réduite
+
+Les requêtes GET retournent les réponses presque instantanément.
+
+Effet bénéfique sur le ressenti utilisateur.
+
+Diminution CPU & RAM
+
+Moins de cycles CPU nécessaires pour traiter les lectures.
+
+Charge mieux répartie, les pics sont atténués.
+
+Erreurs inchangées
+
+Le système reste fiable et stable avec ou sans cache.
+
+## Conclusion
+L’ajout de Redis améliore nettement la scalabilité du système sans compromis sur la stabilité.
+
+Aspect	Impact
+RPS	    Meilleure performance
+Latence	Temps de réponse réduit
+Charge CPU	Moins sollicité
+Utilisation RAM	Plus stable
+Fiabilité	Maintenue
+
+## Recommandations
+Garder Redis activé sur les endpoints GET intensifs.
+
+Ajouter une stratégie d’invalidation sur POST / PUT (mise à jour du cache).
+
+Étendre à d’autres endpoints non volatils (/products, /stock_par_magasin).
+
+Utiliser Grafana pour suivre le taux de hit/miss et ajuster les TTL.
