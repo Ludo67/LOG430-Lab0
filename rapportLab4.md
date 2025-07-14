@@ -1,4 +1,4 @@
-# 🔍 Analyse des points faibles de l’architecture
+# Analyse des points faibles de l’architecture
 
 ## 1. Temps de réponse élevé / Latence
 Observation :
@@ -75,7 +75,7 @@ Le graphique montre que les requêtes HTTP vers l’endpoint /metrics continuent
 
 Conclusion : Le service est resté disponible tout au long du test. Aucune coupure n’a été observée.
 
-## 🔁 2. Redirection par le Load Balancer (NGINX)
+## 2. Redirection par le Load Balancer (NGINX)
 Comportement observé :
 
 Le trafic a été automatiquement redirigé vers les autres instances (log430-stock-1, log430-stock-3) après l’indisponibilité d’une instance.
@@ -84,7 +84,7 @@ Le Load Balancer NGINX a continué de distribuer les requêtes sans action manue
 
 Résultat : Le mécanisme de répartition fonctionne correctement et dynamiquement.
 
-## ⚠️ 3. Impact sur les performances
+## 3. Impact sur les performances
 ### a) Utilisation CPU (process_cpu_seconds_total)
 
 
@@ -106,7 +106,7 @@ Le taux de durée des requêtes reste constant malgré la défaillance.
 
 Aucune latence anormale ni augmentation d’erreurs n’a été détectée.
 
-# 📊 Rapport comparatif des performances selon le nombre d’instances
+# Rapport comparatif des performances selon le nombre d’instances
 ## 1. Comparaison des métriques
 Nombre d’instances	Latence moyenne (ms)	Requêtes par seconde	Taux d’erreurs (%)	Saturation CPU (%)
 1	239.4	64.9	82	57.7
@@ -146,8 +146,11 @@ La charge est mieux répartie à mesure que les instances sont ajoutées.
 ## 3. Synthèse graphique 
 
 ![diagramme cpu](rapport_lab4\instances\graphs\updated\cpu.png)
+
 ![diagramme err](rapport_lab4\instances\graphs\updated\err.png)
+
 ![diagramme latence](rapport_lab4\instances\graphs\updated\latence.png)
+
 ![diagramme reqsec](rapport_lab4\instances\graphs\updated\reqsec.png)
 
 
@@ -234,11 +237,14 @@ Répartition : Pondérée selon les poids définis pour chaque instance
 Résilience : Bonne — dépend des poids et de leur ajustement dynamique
 
 ## Analyse comparative
-Stratégie	RPS	Latence Moy.	Répartition	Résilience	Remarques techniques
-Round Robin	1086.25	41.69 ms	Très équilibrée	Bonne	Facile à implémenter, bon comportement global
-Least Connections	1152.63	38.19 ms	Favorise les moins chargés	Excellente	Performant pour des charges irrégulières
-IP Hash	956.13	47.72 ms	Par IP client (fixe)	Faible	Moins résilient, utile pour affinité session
-Weighted Round Robin	1109.41	39.68 ms	Basée sur poids	Bonne	Nécessite bon réglage des poids
+
+| Stratégie             | RPS     | Latence Moy. | Répartition         | Résilience | Remarques techniques                               |
+|-----------------------|---------|---------------|----------------------|-------------|----------------------------------------------------|
+| Round Robin           | 1086.25 | 41.69 ms      | Très équilibrée      | Bonne       | Facile à implémenter, bon comportement global      |
+| Least Connections     | 1152.63 | 38.19 ms      | Favorise les moins chargés | Excellente  | Performant pour des charges irrégulières          |
+| IP Hash               | 956.13  | 47.72 ms      | Par IP client (fixe) | Faible      | Moins résilient, utile pour affinité session       |
+| Weighted Round Robin  | 1109.41 | 39.68 ms      | Basée sur poids      | Bonne       | Nécessite bon réglage des poids                    |
+
 
 ## Conclusion
 Meilleure performance globale : Least Connections
@@ -284,12 +290,15 @@ Durée de test : 1 minute par scénario
 Charge simulée : mixte lecture/écriture
 
 ## Résultats observés
-Métrique	Sans cache	Avec cache Redis	Variation
-Requêtes par seconde (RPS)	241.8	306.6	🟢 +26.8 %
-Latence moyenne (ms)	109.6	92.3	🟢 -15.8 %
-CPU moyen (process_cpu)	75 % env.	59 % env.	🟢 -16 pts
-Mémoire moyenne (RAM)	570 MiB	490 MiB	🟢 -14 %
-Taux d'erreurs (%)	0	0	✅ Stable
+
+| Métrique                    | Sans cache | Avec cache Redis | Variation        |
+|----------------------------|------------|------------------|------------------|
+| Requêtes par seconde (RPS) | 241.8      | 306.6            | +26.8 %       |
+| Latence moyenne (ms)       | 109.6      | 92.3             | -15.8 %       |
+| CPU moyen (process_cpu)    | 75 % env.  | 59 % env.        | -16 pts       |
+| Mémoire moyenne (RAM)      | 570 MiB    | 490 MiB          | -14 %         |
+| Taux d'erreurs (%)         | 0          | 0                | Stable        |
+
 
 ## Analyse
 Amélioration notable du débit (+26.8 %)
