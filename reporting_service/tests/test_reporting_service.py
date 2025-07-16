@@ -5,9 +5,9 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from data_access_layer.models import Base, Produit, Vente
-from data_access_layer.product_dao import ProduitDAO
-from service_layer.reporting_service import ReportingService
+from shared_data.models import Base, Produit, Vente
+from shared_data.product_dao import ProduitDAO
+from reporting_service import ReportingService
 
 
 class TestReportingService(unittest.TestCase):

@@ -4,8 +4,8 @@ import unittest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from data_access_layer.models import Base, Produit
-from data_access_layer.product_dao import ProduitDAO
+from shared_data.models import Base, Produit
+from shared_data.product_dao import ProduitDAO
 
 
 class TestProduitDAO(unittest.TestCase):

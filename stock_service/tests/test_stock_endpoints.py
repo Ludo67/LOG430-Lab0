@@ -1,0 +1,35 @@
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+API_KEY = "topsecret123"
+HEADERS = {"X-API-Key": API_KEY}
+
+def test_get_all_stock():
+    response = client.get("/stock/", headers=HEADERS)
+    assert response.status_code == 200
+
+def test_get_stock_par_magasin():
+    response = client.get("/stock/stock_par_magasin", params={"magasin_id": 1}, headers=HEADERS)
+    assert response.status_code in (200, 404)
+
+def test_rechercher_produit():
+    response = client.get("/stock/rechercher", params={"terme": "test"}, headers=HEADERS)
+    assert response.status_code == 200
+
+def test_enregistrer_vente():
+    test_annuler_vente()  # Assure we start with a clean slate
+    response = client.post("/stock/vente", json={
+        "produit_id": "1",
+        "quantite": 1,
+        "magasin_id": 1
+    }, headers=HEADERS)
+    assert response.status_code in (200, 400)
+
+def test_annuler_vente():
+    response = client.post("/stock/annulation", json={
+        "produit_id": "1",
+        "quantite": 1,
+        "magasin_id": 1
+    }, headers=HEADERS)
+    assert response.status_code in (200, 400)

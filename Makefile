@@ -25,15 +25,19 @@ init-db:
 seed-db:
 	docker-compose run --rm setup python seed_db.py
 
-# Tests (si test client intégré dans les services)
 test-stock:
-	docker-compose run --rm stock_service pytest tests/
+	docker-compose run --rm -e PYTHONPATH=/app stock_service pytest tests/
 
 test-restock:
-	docker-compose run --rm restock_service pytest tests/
+	docker-compose run --rm -e PYTHONPATH=/app restock_service pytest tests/
 
 test-reporting:
-	docker-compose run --rm reporting_service pytest tests/
+	docker-compose run --rm -e PYTHONPATH=/app reporting_service pytest tests/
+	
+test-shared:
+	docker-compose run --rm -e PYTHONPATH=/app setup pytest shared_data/tests/
+
+
 
 # Qualité
 lint:
