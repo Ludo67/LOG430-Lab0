@@ -1,8 +1,9 @@
 import logging
-from shared_data.models import Panier, ProduitPanier
+from shared_data.models import Panier, ProduitPanier, Produit
 from datetime import datetime
 from sqlalchemy.orm import Session
 from shared_data.cart_dao import CartDAO
+from api.schemas import PanierDetail, ProduitDansPanier
 
 logging.basicConfig(
     level=logging.INFO,  # Change à DEBUG ou ERROR selon les besoins
@@ -32,3 +33,43 @@ class CartService:
         if not panier:
             raise ValueError(f"Panier {panier_id} introuvable")
         return self.dao.ajouter_produit(panier, produit)
+    
+    # def get_panier(self, panier_id: int) -> Panier:
+    #     logger.info(f"Récupération du panier ID {panier_id}.")
+    #     panier = self.dao.get_panier(panier_id)
+    #     if not panier:
+    #         raise ValueError(f"Panier {panier_id} introuvable")
+    #     return panier
+    
+    def get_panier(self, panier_id: int) -> PanierDetail:
+        logger.info(f"Récupération du panier ID {panier_id}.")
+        panier = self.dao.get_panier(panier_id)
+        if not panier:
+            raise ValueError(f"Panier {panier_id} introuvable")
+
+        # Récupérer les produits avec quantités
+        produits_dans_panier = (
+            self.dao.session.query(ProduitPanier, Produit)
+            .join(Produit, (Produit.id == ProduitPanier.produit_id) & (Produit.magasin_id == ProduitPanier.magasin_id))
+            .filter(ProduitPanier.panier_id == panier_id)
+            .all()
+        )
+
+        produits = [
+            ProduitDansPanier(
+                produit_id=prod.id,
+                magasin_id=prod.magasin_id,
+                nom=prod.nom,
+                prix=prod.prix,
+                quantite=pp.quantite
+            )
+            for pp, prod in produits_dans_panier
+        ]
+
+        return PanierDetail(
+            id=panier.id,
+            client_id=panier.client_id,
+            date_creation=panier.date_creation,
+            produits=produits
+        )
+

@@ -5,7 +5,7 @@ from shared_data.models import ProduitPanier
 # from shared_data.cart_dao import CartDAO
 from cart_service import CartService
 from api.auth import verify_api_key
-from api.schemas import PanierCreate, ProduitSimple, PanierOut
+from api.schemas import PanierCreate, ProduitSimple, PanierDetail, PanierOut
 
 logging.basicConfig(
     level=logging.INFO,
@@ -59,8 +59,16 @@ def router(service: CartService) -> APIRouter:
             quantite=produit.quantite
         )
         produit_obj.panier_id = panier_id
-        
+
         logger.info(f"Ajout du produit ID {produit.id} au panier ID {panier_id}.")
         return service.ajouter_produit(panier_id, produit_obj)
 
+    @r.get("/panier/{panier_id}", response_model=PanierDetail, status_code=200)
+    def get_panier(panier_id: int):
+        try:
+            panier = service.get_panier(panier_id)
+            return panier
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        
     return r

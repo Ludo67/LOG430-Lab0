@@ -50,6 +50,25 @@ class ProduitSimple(BaseModel):
 class PanierCreate(BaseModel):
     client_id: int
 
+class ProduitDansPanier(BaseModel):
+    produit_id: int
+    magasin_id: int
+    nom: str
+    prix: float
+    quantite: int
+
+    class Config:
+        from_attributes = True
+
+class PanierDetail(BaseModel):
+    id: int
+    client_id: int
+    date_creation: datetime
+    produits: list[ProduitDansPanier]
+
+    class Config:
+        from_attributes = True
+
 class PanierOut(BaseModel):
     id: int
     client_id: int

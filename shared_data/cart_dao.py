@@ -26,3 +26,6 @@ class CartDAO:
         self.session.commit()
         self.session.refresh(produit_associe)
         return produit_associe
+    
+    def get_panier(self, panier_id: int) -> Panier:
+        return self.session.query(Panier).filter(Panier.id == panier_id).first()
