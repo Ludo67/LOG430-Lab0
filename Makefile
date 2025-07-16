@@ -33,11 +33,15 @@ test-restock:
 
 test-reporting:
 	docker-compose run --rm -e PYTHONPATH=/app reporting_service pytest tests/
-	
+
+test-customer:
+	docker-compose run --rm -e PYTHONPATH=/app customer_service pytest tests/
+
+test-cart:
+	docker-compose run --rm -e PYTHONPATH=/app cart_service pytest tests/
+
 test-shared:
 	docker-compose run --rm -e PYTHONPATH=/app setup pytest shared_data/tests/
-
-
 
 # Qualité
 lint:

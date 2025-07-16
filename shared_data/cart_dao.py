@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from shared_data.models import Panier, ProduitPanier
-from api.schemas import ProduitSimple
 
 class CartDAO:
     def __init__(self, session: Session):

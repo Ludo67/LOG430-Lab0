@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from shared_data.models import Client as ClientModel
-from api.schemas import Client as ClientSchema
+# from api.schemas import Client as ClientSchema
 
 class CustomerDAO:
     def __init__(self, session: Session):
@@ -13,7 +13,7 @@ class CustomerDAO:
         """Récupère un client par son ID."""
         return self.session.query(ClientModel).filter(ClientModel.id == client_id).first()
 
-    def insert(self, client: ClientSchema):
+    def insert(self, client: ClientModel):
         """
         Insère un nouveau client.
         :param client: Un objet Client ou un dictionnaire avec les champs requis.
