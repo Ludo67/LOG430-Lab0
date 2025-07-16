@@ -29,3 +29,10 @@ class CartDAO:
     
     def get_panier(self, panier_id: int) -> Panier:
         return self.session.query(Panier).filter(Panier.id == panier_id).first()
+
+    def vider_panier(self, panier_id: int):
+        """Supprime tous les produits associés à un panier donné."""
+        self.session.query(ProduitPanier).filter(
+            ProduitPanier.panier_id == panier_id
+        ).delete()
+        self.session.commit()

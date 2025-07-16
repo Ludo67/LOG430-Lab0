@@ -71,4 +71,9 @@ def router(service: CartService) -> APIRouter:
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e))
         
+    @r.post("/panier/{panier_id}/checkout", status_code=200)
+    def checkout_panier(panier_id: int):
+        return service.checkout_panier(panier_id)
+
+        
     return r

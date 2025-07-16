@@ -1,7 +1,10 @@
+import requests
 import logging
+import os
 from shared_data.models import Panier, ProduitPanier, Produit
 from datetime import datetime
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from shared_data.cart_dao import CartDAO
 from api.schemas import PanierDetail, ProduitDansPanier
 
@@ -11,6 +14,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+STOCK_SERVICE_URL = "http://stock_service:8000"
+
 
 class CartService:
     def __init__(self, dao: CartDAO):
@@ -72,4 +78,39 @@ class CartService:
             date_creation=panier.date_creation,
             produits=produits
         )
+
+    def checkout_panier(self, panier_id: int) -> float:
+        logger.info(f"Checkout du panier ID {panier_id}.")
+        panier = self.get_panier(panier_id)
+
+        if not panier or not panier.produits:
+            raise ValueError("Le panier est vide ou introuvable.")
+
+        total = 0.0
+        headers = {"X-API-Key": "topsecret123"}
+
+        for produit in panier.produits:
+            payload = {
+                "produit_id": str(produit.produit_id),
+                "quantite": produit.quantite,
+                "magasin_id": produit.magasin_id
+            }
+
+            logger.info(f"Enregistrement de la vente pour produit ID {produit.produit_id}.")
+            logger.debug(f"Payload envoyé au stock service: {payload}")
+
+            try:
+                response = requests.post(f"{STOCK_SERVICE_URL}/stock/vente", json=payload, headers=headers)
+                response.raise_for_status()
+            except requests.RequestException as e:
+                raise HTTPException(status_code=500, detail=f"Erreur lors de l'enregistrement de la vente pour produit ID {produit.produit_id} : {str(e)}")
+
+            total += produit.quantite * produit.prix
+
+        logger.info(f"Vente complétée pour le panier ID {panier_id}, total: {total:.2f}.")
+
+        self.dao.vider_panier(panier_id)
+
+        return total
+
 

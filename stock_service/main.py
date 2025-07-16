@@ -43,3 +43,8 @@ stock_service = StockService(dao)
 
 # Routes
 app.include_router(stock_router(stock_service))
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8001)
+

@@ -38,6 +38,8 @@ services:
       - redis
     ports:
       - "8001:8000"
+    expose:
+      - "8001"
     environment:
       PYTHONPATH: /app
 
@@ -84,6 +86,7 @@ services:
     depends_on:
       - db
       - redis
+      - stock_service
     ports:
       - "8005:8000"
     environment:
