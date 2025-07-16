@@ -3,7 +3,7 @@
 import logging
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
-from data_access_layer.models import Produit, Vente
+from shared_data.models import Produit, Vente
 from sqlalchemy.sql import func, text
 
 logging.basicConfig(
@@ -128,6 +128,7 @@ class ReportingService:
         ).order_by(
             text("semaine DESC")
         ).limit(10).all()
+
         tendances_list = [
             {
                 "semaine": ligne.semaine,

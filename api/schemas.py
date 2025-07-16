@@ -30,3 +30,13 @@ class NouveauProduitDTO(BaseModel):
     quantite: int
     prix: float
     magasin_id: int
+
+class Client(BaseModel):
+    id: int
+    nom: str
+    prenom: str
+    email: str
+    adresse: str
+
+    class Config:
+        from_attributes = True

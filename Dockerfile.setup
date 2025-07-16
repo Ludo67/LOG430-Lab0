@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY setup /app
+COPY shared_data /app/shared_data
+COPY requirements.txt ./requirements.txt
+
+ENV PYTHONPATH=/app
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["python"]
