@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime
 
 class VenteRequest(BaseModel):
     produit_id: str
@@ -40,3 +41,19 @@ class Client(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProduitSimple(BaseModel):
+    id: int
+    magasin_id: int
+    quantite: int
+
+class PanierCreate(BaseModel):
+    client_id: int
+
+class PanierOut(BaseModel):
+    id: int
+    client_id: int
+    date_creation: datetime
+
+    class Config:
+        orm_mode = True

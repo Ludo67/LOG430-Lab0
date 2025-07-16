@@ -1,10 +1,31 @@
 """Modèle de base SQLAlchemy pour les entités Produit et Vente."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, PrimaryKeyConstraint, ForeignKeyConstraint
+from sqlalchemy import (
+    Column, Integer, String, Float, ForeignKey, DateTime,
+    PrimaryKeyConstraint, ForeignKeyConstraint, Table
+)
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
+class ProduitPanier(Base):
+    __tablename__ = "produits_paniers"
+
+    panier_id = Column(Integer, ForeignKey("paniers.id"), primary_key=True)
+    produit_id = Column(Integer, primary_key=True)
+    magasin_id = Column(Integer, primary_key=True)
+    quantite = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["produit_id", "magasin_id"],
+            ["produits.id", "produits.magasin_id"]
+        ),
+    )
+
+    panier = relationship("Panier", back_populates="produits_associes")
+    produit = relationship("Produit")
 
 # pylint: disable=too-few-public-methods
 class Produit(Base):
@@ -23,6 +44,11 @@ class Produit(Base):
     )
 
     ventes = relationship("Vente", back_populates="produit")
+    # paniers = relationship(
+    #     "Panier",
+    #     secondary=produits_paniers,
+    #     back_populates="produits"
+    # )
 
     def __repr__(self):
         return (
@@ -58,3 +84,15 @@ class Client(Base):
     prenom = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     adresse = Column(String, nullable=False)
+    paniers = relationship("Panier", back_populates="client")
+
+class Panier(Base):
+    __tablename__ = "paniers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"))
+    date_creation = Column(DateTime, default=datetime.utcnow)
+
+    client = relationship("Client", back_populates="paniers")
+    produits_associes = relationship("ProduitPanier", back_populates="panier")
+
