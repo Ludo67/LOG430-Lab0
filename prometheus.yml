@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'fastapi-services'
+    static_configs:
+      - targets: ['stock_service:8000', 'cart_service_1:8000', 'cart_service_2:8000', 'customer_service:8000', 'restock_service:8000', 'reporting_service:8000']

@@ -6,118 +6,119 @@ Session: Été 2025
 ```
 
 ## Description
-Ce projet est une application console qui gère le stock et les ventes d'une compagnie. 
+Ce projet est une application gèrant le stock, les commandesm, les transferts, les client et les ventes d'une compagnie. 
 
 ## L'architecture
 
 # Architecture du système
 
-Le système est organisé selon une architecture en couches, favorisant la séparation des responsabilités, la testabilité et l’évolutivité.
+Le système est conçu selon une architecture à base de microservices conteneurisés via Docker Compose, favorisant la modularité, l'évolutivité et la scalabilité horizontale.
 
-## 1. Couche `data_access_layer`
+## 1. Couche `shared_data`
 
-Cette couche gère la persistance des données à l’aide de SQLAlchemy.
+Chaque microservice gère sa propriété accès aux données via SQLAlchemy, connecté à une base PostgreSQL commune.
 
 - **Modèles** :
-  - `Produit` : représente les produits disponibles dans les magasins.
-  - `Vente` : représente les ventes réalisées.
+  - `Produit`, `Vente`, `Client`, `Panier`, `ProduitPanier`, etc.
+  - Organisés dans chaque microservice (`stock_service`, `customer_service`, etc.)
 
-- **DAO (`ProduitDAO`)** :
-  - `get_by_id(id, magasin_id)`
-  - `rechercher(terme)`
-  - `update(produit)`
-  - `get_all()`
-  - `get_ventes_par_magasin()`
-  - `close()`
+- **DAO** :
+  - Chaque entité dispose d'un DAO (ex: `ProduitDAO`) avec des méthodes comme `get_by_id`, `rechercher`, `update`, etc.
 
-## 2. Couche `service_layer`
+## 2. Services
 
-Cette couche contient la logique métier du système. Elle repose sur `ProduitDAO` pour effectuer ses opérations.
+Cette couche encapsule la logique métier spécifique à chaque microservice.
 
-- **`StockService`** :
-  - `rechercher_produit(terme)`
-  - `enregistrer_vente(id, quantite, magasin)`
-  - `annuler_vente(id, quantite, magasin)`
-  - `lister_stock()`
+- **`StockService`**
+- **`RestockService`**
+- **`ReportingService`**
+- **`CustomerService`**
+- **`CartService`**
 
-- **`RestockService`** :
-  - `transferer_stock(produit_id, quantite, magasin_source, magasin_cible)`
-  - `get_ventes_par_magasin()`
+Chaque service fait appel à ses DAO pour appliquer la logique d'affaires.
 
-- **`ReportingService`** :
-  - `tableau_de_bord()`
-  - `rapport_ventes()`
-  - `produits_en_rupture(seuil)`
+## 3. Couche `API` (FastAPI)
 
-## 3. Couche `presentation_layer`
+Chaque microservice expose une API REST documentée via Swagger (OpenAPI 3.0), et utilise :
 
-Cette couche est responsable de l’interaction avec l’utilisateur via le terminal.
+- Authentification par `X-API-Key`
+- Logging structuré
+- Instrumentation Prometheus via `prometheus_fastapi_instrumentator`
+- Middleware CORS
 
-- **`main.py`** :
-  - Affiche un menu CLI
-  - Collecte les choix utilisateurs
-  - Appelle les méthodes de services correspondantes
+## 4. API Gateway (KrakenD)
+
+- Centralise toutes les routes REST via `krakend.json`
+- Transmet les en-têtes (`X-API-Key`) aux microservices backend
+- Compatible avec Swagger UI pour une interface unifiée
+
+## 5. Observabilité
+
+- **Prometheus** : collecte les métriques depuis chaque microservice
+- **Grafana** : visualisation des dashboards (latence, disponibilité, instance)
+- **Requêtes Prometheus** :
+  - `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[1m]))`
+  - `rate(http_requests_total{status!~"4..|5.."}[1m])`
+  - `sum by (instance) (rate(http_requests_total[1m]))`
+
+---
 
 # Besoins fonctionnels et non-fonctionnels
 
 ## ✅ Besoins fonctionnels
 
-Ce système permet aux utilisateurs de gérer le stock et d’effectuer des opérations de vente, de réapprovisionnement et de suivi, via une interface terminale.
+Le système permet la gestion de stock, la vente, le panier client et le reporting via une interface REST.
 
 ### 1. Gestion du stock
-- Consulter la liste des produits en stock pour un magasin donné.
-- Rechercher un produit par nom ou mot-clé.
-- Enregistrer une vente (réduction de la quantité d’un produit).
-- Annuler une vente (restauration de la quantité d’un produit).
+- `GET /stock/` : liste des produits
+- `POST /stock/vente` / `annulation`
+- `PUT /stock/update/:produit_id/magasin/:magasin_id`
 
-### 2. Réapprovisionnement entre magasins
-- Transférer du stock d’un produit d’un magasin source vers un magasin cible.
-- Créer automatiquement le produit dans le magasin cible si celui-ci n'existe pas encore.
+### 2. Réapprovisionnement
+- `POST /restock/transferer`
+- `GET /restock/stock_par_magasin`
 
 ### 3. Tableau de bord / Reporting
-- Générer un rapport de ventes par magasin.
-- Afficher la liste des produits en rupture de stock (selon un seuil configurable).
+- `GET /reporting/ventes`, `/ruptures`, `/dashboard`
 
-### 4. Interface utilisateur
-- Fournir un menu textuel interactif accessible via le terminal.
-- Permettre à l’utilisateur de naviguer entre les fonctionnalités du système.
+### 4. Gestion client
+- `POST /clients/`, `GET /clients/{client_id}`
+
+### 5. Panier
+- `POST /panier/`, `/panier/{id}/produit`, `/panier/{id}/checkout`
+- `GET /panier/panier/{id}`
 
 ---
 
 ## ✅ Besoins non-fonctionnels
 
-### 🔧 Architecture et conception
-- Respect de l’architecture en couches (`data_access_layer`, `service_layer`, `presentation_layer`).
-- Modélisation du système via les diagrammes UML (4+1) avec PlantUML :
-  - Vue logique (classes)
-  - Vue processus (séquences)
-  - Vue déploiement
-  - Vue implémentation (fichiers et modules)
-  - Vue cas d'utilisation
+### 🔧 Architecture
+- Microservices FastAPI
+- Base de données PostgreSQL commune
+- Communication via Docker internal network
 
 ### 🔍 Testabilité
-- Tests unitaires complets avec `unittest`.
-- Utilisation d’une base de données SQLite en mémoire pour exécuter les tests.
+- Tests unitaires des DAO et services
+- Tests d’intégration des routes FastAPI
 
-### 🧩 Extensibilité
-- L’architecture permet d’ajouter facilement de nouvelles fonctionnalités.
-- La logique métier est découplée des détails de persistance.
+### 🧰 Observabilité
+- Prometheus scrappe `/metrics` de chaque service
+- Dashboards Grafana pour :
+  - Latence 95e percentile
+  - Taux de réussite des requêtes
+  - Répartition de charge
 
-### 💡 Maintenabilité
-- Le projet est analysé avec `pylint` (objectif ≥ 9.5/10).
-- Organisation claire des fichiers et responsabilités.
+### 🚀 Performance
+- Load testing avec `k6`
+- API Gateway avec KrakenD (future option : Kong)
+- Scalabilité horizontale testée avec `cart_service_1` et `cart_service_2`
 
-### ⚡ Performance
-- Les opérations de vente, de transfert et de reporting sont optimisées pour un traitement rapide.
-- Approche simplifiée sans surcoût pour un projet pédagogique.
+### 📅 Déploiement
+- Docker Compose (multi-service)
+- Script d’initialisation de la base (`init_db.py`, `seed_db.py`)
 
-### 💾 Persistance
-- Utilisation de SQLAlchemy pour la gestion des entités et la base de données SQLite.
-
-### 🚀 Déploiement
-- Exécutable dans une machine virtuelle Ubuntu avec Python 3.
-- Pas de dépendance complexe : uniquement `sqlalchemy`, `plantuml`, et `unittest`.
-
+### 🔄 Swagger unifié
+- Swagger UI connecté à KrakenD via `swagger-config.yaml`
 
 ## Justification des décisions d'architecture. (ADR)
 
@@ -267,14 +268,15 @@ Installer un .venv. voir (https://packaging.python.org/en/latest/guides/installi
 ### Installer dépendances
 `pip install -r requirements.txt`
 
-### Docker commands to build (terminal)
-`docker build -t my-app .`
-`docker-compose up`
-`docker run -it my-app`
+### setup projet(terminal)
+`make build`
+`make init-db`
+`make seed-db`
+`make up`
 
 ### Executer les tests unitaires
 
-Terminal: `pytest`
+Terminal: `make test-` + nom du service
 
 ## Instruction pour l'environnement de production
 

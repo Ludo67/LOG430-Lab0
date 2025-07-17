@@ -74,23 +74,27 @@ services:
     depends_on:
       - db
       - redis
-    ports:
-      - "8004:8000"
     environment:
       PYTHONPATH: /app
 
-  cart_service:
+  cart_service_1:
     build:
       context: .
       dockerfile: Dockerfile.cart
-    depends_on:
-      - db
-      - redis
-      - stock_service
-    ports:
-      - "8005:8000"
+    container_name: cart_service_1
     environment:
-      PYTHONPATH: /app
+      - INSTANCE_ID=1
+
+  cart_service_2:
+    build:
+      context: .
+      dockerfile: Dockerfile.cart
+    container_name: cart_service_2
+    ports:
+      - "8006:8000"
+    environment:
+      - INSTANCE_ID=2
+
 
   krakend:
     image: devopsfaith/krakend
@@ -104,7 +108,8 @@ services:
       - restock_service
       - reporting_service
       - customer_service
-      - cart_service
+      - cart_service_1
+      - cart_service_2
 
   swagger-ui:
     image: swaggerapi/swagger-ui
@@ -124,6 +129,20 @@ services:
     depends_on:
       - krakend
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
 
 volumes:
   pgdata:
+  grafana-storage:

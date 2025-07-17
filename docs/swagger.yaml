@@ -11,6 +11,8 @@ openapi: 3.0.0
 paths:
   /clients/:
     post:
+      summary: Créer un client
+      description: Crée un nouveau client dans le système.
       requestBody:
         required: true
         content:
@@ -33,11 +35,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Créer un client
       tags:
       - Clients
   /clients/{client_id}:
     get:
+      summary: Récupérer un client par ID
+      description: Récupère les informations d'un client spécifique.
       parameters:
       - in: path
         name: client_id
@@ -49,11 +52,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Récupérer un client par ID
       tags:
       - Clients
   /panier/:
     post:
+      summary: Créer un panier
+      description: Crée un nouveau panier pour un client. 
       requestBody:
         required: true
         content:
@@ -68,11 +72,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Créer un panier
       tags:
       - Panier
   /panier/panier/{panier_id}:
     get:
+      summary: Obtenir un panier par ID
+      description: Récupère les détails d'un panier spécifique (tous les produits).
       parameters:
       - in: path
         name: panier_id
@@ -84,11 +89,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Obtenir un panier par ID
       tags:
       - Panier
   /panier/panier/{panier_id}/checkout:
     post:
+      summary: Valider le panier (checkout)
+      description: Valide le panier et enregistre la commande.
       parameters:
       - in: path  
         name: panier_id
@@ -100,11 +106,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Valider le panier
       tags:
       - Panier
   /panier/{panier_id}/produit:
     post:
+      summary: Ajouter un produit au panier
+      description: Ajoute un produit spécifique au panier.
       parameters:
       - in: path  
         name: panier_id
@@ -129,41 +136,45 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Ajouter un produit au panier
       tags:
       - Panier
   /reporting/dashboard:
     get:
+      summary: Afficher le tableau de bord
+      description: Affiche les statistiques du tableau de bord (chiffre d'affaires, tendances, etc.).
       responses:
         '200':
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Afficher le tableau de bord
       tags:
       - Rapports
   /reporting/ruptures:
     get:
+      summary: Afficher les ruptures de stock
+      description: Affiche les produits en rupture de stock.
       responses:
         '200':
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Afficher les ruptures de stock
       tags:
       - Rapports
   /reporting/ventes:
     get:
+      summary: Afficher les ventes
+      description: Affiche les ventes effectuées.
       responses:
         '200':
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Afficher les ventes
       tags:
       - Rapports
   /restock/stock_par_magasin:
     get:
+      summary: Afficher le stock par magasin
+      description: Affiche le stock disponible pour un magasin spécifique.
       parameters:
       - in: query
         name: magasin_id
@@ -175,11 +186,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Afficher le stock par magasin
       tags:
       - Réapprovisionnement
   /restock/transferer:
     post:
+      summary: Transférer du stock entre magasins
+      description: Transfère une quantité spécifique d'un produit d'un magasin source vers un magasin destination.
       requestBody:
         required: true
         content:
@@ -200,21 +212,23 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Transférer du stock entre magasins
       tags:
       - Réapprovisionnement
   /stock/:
     get:
+      summary: Récupérer tous les produits en stock
+      description: Récupère la liste de tous les produits disponibles en stock.
       responses:
         '200':
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Récupérer tous les produits en stock
       tags:
       - Stock
   /stock/annulation:
     post:
+      summary: Annuler une vente de produit
+      description: Annule une vente de produit en spécifiant l'ID du produit, la quantité et l'ID du magasin.
       requestBody:
         required: true
         content:
@@ -233,11 +247,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Annuler une vente de produit
       tags:
       - Stock
   /stock/rechercher:
     get:
+      summary: Rechercher un produit
+      description: Recherche un produit par terme dans le nom ou la catégorie ou le id.
       parameters:
       - in: query
         name: terme
@@ -250,11 +265,12 @@ paths:
       
       security:
       - ApiKeyAuth: []
-      summary: Rechercher un produit
       tags:
       - Stock
   /stock/update/{produit_id}/magasin/{magasin_id}:
     put:
+      summary: Mettre à jour le stock d'un produit dans un magasin
+      description: Met à jour les informations d'un produit spécifique dans un magasin.
       parameters:
       - in: path
         name: produit_id
@@ -286,11 +302,12 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Mettre à jour le stock d'un produit dans un magasin
       tags:
       - Stock
   /stock/vente:
     post:
+      summary: Enregistrer une vente de produit
+      description: Enregistre une vente de produit en spécifiant l'ID du produit, la
       requestBody:
         required: true
         content:
@@ -309,7 +326,6 @@ paths:
           description: Succès
       security:
       - ApiKeyAuth: []
-      summary: Enregistrer une vente de produit
       tags:
       - Stock
 security:

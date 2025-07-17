@@ -75,5 +75,9 @@ def router(service: CartService) -> APIRouter:
     def checkout_panier(panier_id: int):
         return service.checkout_panier(panier_id)
 
+    @r.get("/whoami", status_code=200)
+    def whoami():
+        return {"instance": os.getenv("INSTANCE_ID", "unknown")}
+
         
     return r

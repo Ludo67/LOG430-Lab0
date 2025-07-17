@@ -182,6 +182,18 @@
         "host": ["http://cart_service:8000"],
         "url_pattern": "/panier/panier/{panier_id}/checkout"
       }]
+    },
+    {
+      "endpoint": "/cart/whoami",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://cart_service_1:8000", "http://cart_service_2:8000"],
+          "url_pattern": "/whoami"
+        }
+      ]
     }
+
   ]
 }
