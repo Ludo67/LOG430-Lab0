@@ -120,142 +120,130 @@ Le système permet la gestion de stock, la vente, le panier client et le reporti
 ### 🔄 Swagger unifié
 - Swagger UI connecté à KrakenD via `swagger-config.yaml`
 
-## Justification des décisions d'architecture. (ADR)
+# Justification des décisions d'architecture (ADR)
+## 1. Choix de la base de données – ADR
+Statut : Accepté
+Date : 2025-07-16
 
-## 1 - Choix de la base de données, [ADR](docs/ADR/ADR-BD.md)
+Décision :
+Utilisation de PostgreSQL comme base de données relationnelle commune aux microservices.
 
-### Statut : Accepté
-### Date : 2025-06-09
-### Décision 
-    Utilisation de SQLite comme base de données relationnelle locale.
+Contexte :
+Le système devait évoluer vers une architecture distribuée avec plusieurs services (stock, panier, clients, reporting…). Une base centralisée et robuste devenait nécessaire pour permettre la cohérence des données.
 
-### Contexte
-    Le système de gestion de stock devait persister les produits, magasins et ventes. Les exigences précisaient qu’aucun serveur HTTP ou API REST n'était requis, et que la base devait fonctionner localement sur la VM.
+Choix possibles :
 
-### Choix possibles
+SQLite : trop limité pour une architecture distribuée (verrouillages, accès concurrents).
 
-    JSON/CSV : trop fragile pour la cohérence transactionnelle.
+MongoDB : NoSQL mal adapté à la structure relationnelle (produits, clients, ventes).
 
-    MongoDB (NoSQL) et PostgreSQL: trop complexe pour un usage local et non nécessaire.
+PostgreSQL : puissant, open-source, supporte transactions, relations, JSON.
 
-    SQLite : simple, léger, intégré avec Python, supporte les contraintes (clés primaires composées, jointures).
+Conséquences :
 
-### Conséquences
+Chaque microservice se connecte à une base PostgreSQL partagée.
 
-    Facile à intégrer sans configuration serveur.
+Permet l’intégrité référentielle (clé étrangère client_id, produit_id, etc.).
 
-    Compatible avec le module sqlite3 natif.
+Simplifie les tests avec des conteneurs postgres isolés.
 
-    Limite la scalabilité en cas d’accès concurrent élevé
+## 2. Séparation des responsabilités – ADR
+Statut : Accepté
+Date : 2025-07-16
 
-## 2 - Séparation des responsabilités, [ADR](docs/ADR/ADR-Separation.md)
+Décision :
+Adoption d’une architecture microservices avec séparation par domaine fonctionnel.
 
-### Statut : Accepté
-### Date : 2025-06-09
-### Décision
-    Utilisation d’une architecture en 3 couches (présentation, service, accès aux données).
-### Contexte :
-    Le projet devait s'étendre dans les labos suivants, notamment pour prendre en charge de nouveaux UC (UC4–UC7 qui n'ont pas été implémentées encore à cette étape). La modularité et la testabilité devenaient cruciales.
+Contexte :
+Les cas d'utilisation critiques UC1–UC7 nécessitaient des évolutions indépendantes (ajout du panier, création de clients, reporting, réapprovisionnement…). L’architecture en couches n'était plus suffisante seule.
 
-### Choix possibles
+Choix possibles :
 
-    Application monolithique dans un seul fichier (rapide, mais non maintenable).
+Application monolithique : difficilement maintenable à long terme.
 
-    Architecture MVC : autre option possible et interessante (plus utile pour utilisation web)
+Modularité par classes/modules : limite les déploiements indépendants.
 
-    Architecture en couches : claire, modulaire, évolutive.
+Architecture microservices + API Gateway : flexible, déployable, extensible.
 
-### Conséquences
+Conséquences :
 
-    Le dossier presentation_layer gère l'IHM en console.
+Un service = un domaine métier (stock, panier, reporting, etc.).
 
-    Le dossier service_layer isole la logique métier.
+Facilité de scaling horizontal.
 
-    Le dossier data_access_layer encapsule les opérations SQLite.
+Possibilité de résilience par service.
 
-    Les tests peuvent être faits indépendamment sur chaque couche.
+# Choix technologiques
+## 🐍 FastAPI
+Pourquoi ? Framework Python moderne, asynchrone, basé sur OpenAPI.
 
-## Choix technologiques
+Avantage : Génère automatiquement la documentation Swagger, compatible avec Pydantic et les outils modernes de monitoring.
 
-🐍 Python
+## 🐘 PostgreSQL
+Pourquoi ? SGBD robuste, mature, SQL, avec bonne scalabilité verticale.
 
-    Pourquoi ? Langage simple, lisible, et très populaire pour les projets éducatifs et prototypes.
+Avantage : Relations fortes entre entités, transactions ACID, index efficaces.
 
-    Avantage clé : Écosystème riche (librairies, frameworks), rapidité de développement, excellente compatibilité avec les outils de test, de CI/CD, et de conteneurisation.
+## 🔌 Redis
+Pourquoi ? Caching rapide pour améliorer les temps de réponse des endpoints critiques (/dashboard, /stock/create…).
 
-🗃️ SQLite
+Avantage : Stockage clé/valeur en RAM, TTL, utilisé avec aioredis.
 
-    Pourquoi ? Base de données légère et embarquée, parfaite pour les applications simples sans serveur SGBD.
+## 🧱 Architecture microservices + API Gateway
+Pourquoi ? Favorise l’indépendance des déploiements et la résilience.
 
-    Avantage clé : Aucune configuration serveur, fichier local produits.db, idéal pour déploiement rapide ou démonstration.
+Avantage : Chaque service peut être développé, testé et déployé indépendamment.
 
-🧱 SQLAlchemy (ORM)
+## 🔐 KrakenD (ou Kong) comme API Gateway
+Pourquoi ? Centralise les appels, permet de filtrer, authentifier et agréger les requêtes.
 
-    Pourquoi ? Permet d’interagir avec la base de données via des objets Python plutôt qu’avec du SQL brut.
+Avantage : Supporte les en-têtes (ex: X-API-Key), la validation, CORS, Swagger unifié.
 
-    Avantage clé : Abstraction de la logique SQL, rend la couche DAO testable en mémoire avec SQLite, tout en restant compatible avec d'autres SGBD.
+## 📦 Docker + Docker Compose
+Pourquoi ? Isolation, portabilité, simplicité de déploiement.
 
-📦 Architecture à trois couches (DAO / Service / Présentation)
+Avantage : Une commande (make up) démarre l'ensemble de l’environnement avec tous les services et observabilité.
 
-    Pourquoi ? Séparation claire des responsabilités (accès aux données, logique métier, interface utilisateur).
+## 📊 Prometheus + Grafana
+Pourquoi ? Suivre la latence, l'erreur et le débit de chaque service.
 
-    Avantage clé : Facilite les tests, la maintenance, et l’évolution vers des architectures plus complexes (ex: API REST, Frontend).
+Avantage : Visualisation fine de l’utilisation, alerting possible, intégration avec prometheus_fastapi_instrumentator.
 
-🧪 unittest (module Python standard)
+## 🧪 pytest
+Pourquoi ? Plus flexible que unittest, riche en plugins.
 
-    Pourquoi ? Intégré à Python, facile à configurer, compatible avec les pipelines CI.
+Avantage : Permet des tests unitaires et d’intégration efficaces, facilement intégrable dans un pipeline CI/CD.
 
-    Avantage clé : Permet l’automatisation rapide des tests sans dépendance externe.
+## ⚙️ GitHub Actions ou GitLab CI
+Pourquoi ? Intégration continue, déploiement automatique possible.
 
-🐳 Docker + Docker Compose
-
-    Pourquoi ? Facilite le déploiement, l’isolation de l’environnement, et la portabilité du projet.
-
-    Avantage clé : Une seule commande (docker-compose up) suffit pour lancer toute l’application, peu importe l’environnement hôte.
-
-⚙️ GitHub Actions (CI/CD)
-
-    Pourquoi ? Intégration directe avec GitHub pour automatiser les tests, la construction Docker et les déploiements.
-
-    Avantage clé : Automatisation fiable et gratuite pour projets open source, renforce la qualité du code.
+Avantage : Qualité assurée avant merge, pipeline reproductible et traçable.
 
 
 ## Diagrammes
 
 ### Vue Logique
 
-![diagramme de classe](out/docs/UML/class_diagram/vue_logique.png)
+![diagramme de classe](docs\newUMLS\logique.png)
 
 ### Vue d'implémentation
 
-![diagramme processus](out/docs/UML/implementation/implementation.png)
+![diagramme processus](docs\newUMLS\implementation.png)
 
 ### Vue de deploiement
 
-![diagramme de deploiement](out/docs/UML/deployment/deployment.png)
+![diagramme de deploiement](docs\newUMLS\physique_deploy.png)
 
 ### Vue d'implémentation
 
-![diagramme d'implémentation](out/docs/UML/implementation/implementation.png)
+![diagramme d'implémentation](docs\newUMLS\implementation.png)
 
 ### Vue de cas d'utilisation
 
-![diagramme de cas d'utilisation](out/docs/UML/use_cases/VueCasUtilisation.png)
+![diagramme de cas d'utilisation](docs\newUMLS\cas.png)
 
 ## Diagrammes de séquence (processus)
-
-### Annuler vente
-![diagramme sequence annulation vente](out/docs/UML/sequence_diagrams/annulation_vente/sequence_diagram_annulation.png)
-### Enregistrer vente
-![diagramme sequence enregistrement vente](out/docs/UML/sequence_diagrams/enregistrer_vente/sequence_diagram_vente.png)
-### Reapprovisionnement
-![diagramme sequence restock](out/docs/UML/sequence_diagrams/restock/sequence_diagram_restock.png)
-### Rechercher produit
-![diagramme sequence rechercher](out/docs/UML/sequence_diagrams/recherche_produit/sequence_diagram_recherche.png)
-### Voir stock
-![diagramme sequence consulter stock](out/docs/UML/sequence_diagrams/voir_stock/sequence_diagram_stock.png)
-### Afficher tableau de bord
-![diagramme sequence tableau](out/docs/UML/sequence_diagrams/tableau_de_bord/sequence_diagram_tableau_bord.png)
+![diagramme sequence annulation vente](docs\newUMLS\processus.png)
 
 ## Instruction d'installation et d'execution
 

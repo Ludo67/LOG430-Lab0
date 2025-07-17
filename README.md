@@ -6,255 +6,244 @@ Session: Été 2025
 ```
 
 ## Description
-Ce projet est une application console qui gère le stock et les ventes d'une compagnie. 
+Ce projet est une application gèrant le stock, les commandesm, les transferts, les client et les ventes d'une compagnie. 
 
 ## L'architecture
 
 # Architecture du système
 
-Le système est organisé selon une architecture en couches, favorisant la séparation des responsabilités, la testabilité et l’évolutivité.
+Le système est conçu selon une architecture à base de microservices conteneurisés via Docker Compose, favorisant la modularité, l'évolutivité et la scalabilité horizontale.
 
-## 1. Couche `data_access_layer`
+## 1. Couche `shared_data`
 
-Cette couche gère la persistance des données à l’aide de SQLAlchemy.
+Chaque microservice gère sa propriété accès aux données via SQLAlchemy, connecté à une base PostgreSQL commune.
 
 - **Modèles** :
-  - `Produit` : représente les produits disponibles dans les magasins.
-  - `Vente` : représente les ventes réalisées.
+  - `Produit`, `Vente`, `Client`, `Panier`, `ProduitPanier`, etc.
+  - Organisés dans chaque microservice (`stock_service`, `customer_service`, etc.)
 
-- **DAO (`ProduitDAO`)** :
-  - `get_by_id(id, magasin_id)`
-  - `rechercher(terme)`
-  - `update(produit)`
-  - `get_all()`
-  - `get_ventes_par_magasin()`
-  - `close()`
+- **DAO** :
+  - Chaque entité dispose d'un DAO (ex: `ProduitDAO`) avec des méthodes comme `get_by_id`, `rechercher`, `update`, etc.
 
-## 2. Couche `service_layer`
+## 2. Services
 
-Cette couche contient la logique métier du système. Elle repose sur `ProduitDAO` pour effectuer ses opérations.
+Cette couche encapsule la logique métier spécifique à chaque microservice.
 
-- **`StockService`** :
-  - `rechercher_produit(terme)`
-  - `enregistrer_vente(id, quantite, magasin)`
-  - `annuler_vente(id, quantite, magasin)`
-  - `lister_stock()`
+- **`StockService`**
+- **`RestockService`**
+- **`ReportingService`**
+- **`CustomerService`**
+- **`CartService`**
 
-- **`RestockService`** :
-  - `transferer_stock(produit_id, quantite, magasin_source, magasin_cible)`
-  - `get_ventes_par_magasin()`
+Chaque service fait appel à ses DAO pour appliquer la logique d'affaires.
 
-- **`ReportingService`** :
-  - `tableau_de_bord()`
-  - `rapport_ventes()`
-  - `produits_en_rupture(seuil)`
+## 3. Couche `API` (FastAPI)
 
-## 3. Couche `presentation_layer`
+Chaque microservice expose une API REST documentée via Swagger (OpenAPI 3.0), et utilise :
 
-Cette couche est responsable de l’interaction avec l’utilisateur via le terminal.
+- Authentification par `X-API-Key`
+- Logging structuré
+- Instrumentation Prometheus via `prometheus_fastapi_instrumentator`
+- Middleware CORS
 
-- **`main.py`** :
-  - Affiche un menu CLI
-  - Collecte les choix utilisateurs
-  - Appelle les méthodes de services correspondantes
+## 4. API Gateway (KrakenD)
+
+- Centralise toutes les routes REST via `krakend.json`
+- Transmet les en-têtes (`X-API-Key`) aux microservices backend
+- Compatible avec Swagger UI pour une interface unifiée
+
+## 5. Observabilité
+
+- **Prometheus** : collecte les métriques depuis chaque microservice
+- **Grafana** : visualisation des dashboards (latence, disponibilité, instance)
+- **Requêtes Prometheus** :
+  - `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[1m]))`
+  - `rate(http_requests_total{status!~"4..|5.."}[1m])`
+  - `sum by (instance) (rate(http_requests_total[1m]))`
+
+---
 
 # Besoins fonctionnels et non-fonctionnels
 
 ## ✅ Besoins fonctionnels
 
-Ce système permet aux utilisateurs de gérer le stock et d’effectuer des opérations de vente, de réapprovisionnement et de suivi, via une interface terminale.
+Le système permet la gestion de stock, la vente, le panier client et le reporting via une interface REST.
 
 ### 1. Gestion du stock
-- Consulter la liste des produits en stock pour un magasin donné.
-- Rechercher un produit par nom ou mot-clé.
-- Enregistrer une vente (réduction de la quantité d’un produit).
-- Annuler une vente (restauration de la quantité d’un produit).
+- `GET /stock/` : liste des produits
+- `POST /stock/vente` / `annulation`
+- `PUT /stock/update/:produit_id/magasin/:magasin_id`
 
-### 2. Réapprovisionnement entre magasins
-- Transférer du stock d’un produit d’un magasin source vers un magasin cible.
-- Créer automatiquement le produit dans le magasin cible si celui-ci n'existe pas encore.
+### 2. Réapprovisionnement
+- `POST /restock/transferer`
+- `GET /restock/stock_par_magasin`
 
 ### 3. Tableau de bord / Reporting
-- Générer un rapport de ventes par magasin.
-- Afficher la liste des produits en rupture de stock (selon un seuil configurable).
+- `GET /reporting/ventes`, `/ruptures`, `/dashboard`
 
-### 4. Interface utilisateur
-- Fournir un menu textuel interactif accessible via le terminal.
-- Permettre à l’utilisateur de naviguer entre les fonctionnalités du système.
+### 4. Gestion client
+- `POST /clients/`, `GET /clients/{client_id}`
+
+### 5. Panier
+- `POST /panier/`, `/panier/{id}/produit`, `/panier/{id}/checkout`
+- `GET /panier/panier/{id}`
 
 ---
 
 ## ✅ Besoins non-fonctionnels
 
-### 🔧 Architecture et conception
-- Respect de l’architecture en couches (`data_access_layer`, `service_layer`, `presentation_layer`).
-- Modélisation du système via les diagrammes UML (4+1) avec PlantUML :
-  - Vue logique (classes)
-  - Vue processus (séquences)
-  - Vue déploiement
-  - Vue implémentation (fichiers et modules)
-  - Vue cas d'utilisation
+### 🔧 Architecture
+- Microservices FastAPI
+- Base de données PostgreSQL commune
+- Communication via Docker internal network
 
 ### 🔍 Testabilité
-- Tests unitaires complets avec `unittest`.
-- Utilisation d’une base de données SQLite en mémoire pour exécuter les tests.
+- Tests unitaires des DAO et services
+- Tests d’intégration des routes FastAPI
 
-### 🧩 Extensibilité
-- L’architecture permet d’ajouter facilement de nouvelles fonctionnalités.
-- La logique métier est découplée des détails de persistance.
+### 🧰 Observabilité
+- Prometheus scrappe `/metrics` de chaque service
+- Dashboards Grafana pour :
+  - Latence 95e percentile
+  - Taux de réussite des requêtes
+  - Répartition de charge
 
-### 💡 Maintenabilité
-- Le projet est analysé avec `pylint` (objectif ≥ 9.5/10).
-- Organisation claire des fichiers et responsabilités.
+### 🚀 Performance
+- Load testing avec `k6`
+- API Gateway avec KrakenD (future option : Kong)
+- Scalabilité horizontale testée avec `cart_service_1` et `cart_service_2`
 
-### ⚡ Performance
-- Les opérations de vente, de transfert et de reporting sont optimisées pour un traitement rapide.
-- Approche simplifiée sans surcoût pour un projet pédagogique.
+### 📅 Déploiement
+- Docker Compose (multi-service)
+- Script d’initialisation de la base (`init_db.py`, `seed_db.py`)
 
-### 💾 Persistance
-- Utilisation de SQLAlchemy pour la gestion des entités et la base de données SQLite.
+### 🔄 Swagger unifié
+- Swagger UI connecté à KrakenD via `swagger-config.yaml`
 
-### 🚀 Déploiement
-- Exécutable dans une machine virtuelle Ubuntu avec Python 3.
-- Pas de dépendance complexe : uniquement `sqlalchemy`, `plantuml`, et `unittest`.
+# Justification des décisions d'architecture (ADR)
+## 1. Choix de la base de données – ADR
+Statut : Accepté
+Date : 2025-07-16
 
+Décision :
+Utilisation de PostgreSQL comme base de données relationnelle commune aux microservices.
 
-## Justification des décisions d'architecture. (ADR)
+Contexte :
+Le système devait évoluer vers une architecture distribuée avec plusieurs services (stock, panier, clients, reporting…). Une base centralisée et robuste devenait nécessaire pour permettre la cohérence des données.
 
-## 1 - Choix de la base de données, [ADR](docs/ADR/ADR-BD.md)
+Choix possibles :
 
-### Statut : Accepté
-### Date : 2025-06-09
-### Décision 
-    Utilisation de SQLite comme base de données relationnelle locale.
+SQLite : trop limité pour une architecture distribuée (verrouillages, accès concurrents).
 
-### Contexte
-    Le système de gestion de stock devait persister les produits, magasins et ventes. Les exigences précisaient qu’aucun serveur HTTP ou API REST n'était requis, et que la base devait fonctionner localement sur la VM.
+MongoDB : NoSQL mal adapté à la structure relationnelle (produits, clients, ventes).
 
-### Choix possibles
+PostgreSQL : puissant, open-source, supporte transactions, relations, JSON.
 
-    JSON/CSV : trop fragile pour la cohérence transactionnelle.
+Conséquences :
 
-    MongoDB (NoSQL) et PostgreSQL: trop complexe pour un usage local et non nécessaire.
+Chaque microservice se connecte à une base PostgreSQL partagée.
 
-    SQLite : simple, léger, intégré avec Python, supporte les contraintes (clés primaires composées, jointures).
+Permet l’intégrité référentielle (clé étrangère client_id, produit_id, etc.).
 
-### Conséquences
+Simplifie les tests avec des conteneurs postgres isolés.
 
-    Facile à intégrer sans configuration serveur.
+## 2. Séparation des responsabilités – ADR
+Statut : Accepté
+Date : 2025-07-16
 
-    Compatible avec le module sqlite3 natif.
+Décision :
+Adoption d’une architecture microservices avec séparation par domaine fonctionnel.
 
-    Limite la scalabilité en cas d’accès concurrent élevé
+Contexte :
+Les cas d'utilisation critiques UC1–UC7 nécessitaient des évolutions indépendantes (ajout du panier, création de clients, reporting, réapprovisionnement…). L’architecture en couches n'était plus suffisante seule.
 
-## 2 - Séparation des responsabilités, [ADR](docs/ADR/ADR-Separation.md)
+Choix possibles :
 
-### Statut : Accepté
-### Date : 2025-06-09
-### Décision
-    Utilisation d’une architecture en 3 couches (présentation, service, accès aux données).
-### Contexte :
-    Le projet devait s'étendre dans les labos suivants, notamment pour prendre en charge de nouveaux UC (UC4–UC7 qui n'ont pas été implémentées encore à cette étape). La modularité et la testabilité devenaient cruciales.
+Application monolithique : difficilement maintenable à long terme.
 
-### Choix possibles
+Modularité par classes/modules : limite les déploiements indépendants.
 
-    Application monolithique dans un seul fichier (rapide, mais non maintenable).
+Architecture microservices + API Gateway : flexible, déployable, extensible.
 
-    Architecture MVC : autre option possible et interessante (plus utile pour utilisation web)
+Conséquences :
 
-    Architecture en couches : claire, modulaire, évolutive.
+Un service = un domaine métier (stock, panier, reporting, etc.).
 
-### Conséquences
+Facilité de scaling horizontal.
 
-    Le dossier presentation_layer gère l'IHM en console.
+Possibilité de résilience par service.
 
-    Le dossier service_layer isole la logique métier.
+# Choix technologiques
+## 🐍 FastAPI
+Pourquoi ? Framework Python moderne, asynchrone, basé sur OpenAPI.
 
-    Le dossier data_access_layer encapsule les opérations SQLite.
+Avantage : Génère automatiquement la documentation Swagger, compatible avec Pydantic et les outils modernes de monitoring.
 
-    Les tests peuvent être faits indépendamment sur chaque couche.
+## 🐘 PostgreSQL
+Pourquoi ? SGBD robuste, mature, SQL, avec bonne scalabilité verticale.
 
-## Choix technologiques
+Avantage : Relations fortes entre entités, transactions ACID, index efficaces.
 
-🐍 Python
+## 🔌 Redis
+Pourquoi ? Caching rapide pour améliorer les temps de réponse des endpoints critiques (/dashboard, /stock/create…).
 
-    Pourquoi ? Langage simple, lisible, et très populaire pour les projets éducatifs et prototypes.
+Avantage : Stockage clé/valeur en RAM, TTL, utilisé avec aioredis.
 
-    Avantage clé : Écosystème riche (librairies, frameworks), rapidité de développement, excellente compatibilité avec les outils de test, de CI/CD, et de conteneurisation.
+## 🧱 Architecture microservices + API Gateway
+Pourquoi ? Favorise l’indépendance des déploiements et la résilience.
 
-🗃️ SQLite
+Avantage : Chaque service peut être développé, testé et déployé indépendamment.
 
-    Pourquoi ? Base de données légère et embarquée, parfaite pour les applications simples sans serveur SGBD.
+## 🔐 KrakenD (ou Kong) comme API Gateway
+Pourquoi ? Centralise les appels, permet de filtrer, authentifier et agréger les requêtes.
 
-    Avantage clé : Aucune configuration serveur, fichier local produits.db, idéal pour déploiement rapide ou démonstration.
+Avantage : Supporte les en-têtes (ex: X-API-Key), la validation, CORS, Swagger unifié.
 
-🧱 SQLAlchemy (ORM)
+## 📦 Docker + Docker Compose
+Pourquoi ? Isolation, portabilité, simplicité de déploiement.
 
-    Pourquoi ? Permet d’interagir avec la base de données via des objets Python plutôt qu’avec du SQL brut.
+Avantage : Une commande (make up) démarre l'ensemble de l’environnement avec tous les services et observabilité.
 
-    Avantage clé : Abstraction de la logique SQL, rend la couche DAO testable en mémoire avec SQLite, tout en restant compatible avec d'autres SGBD.
+## 📊 Prometheus + Grafana
+Pourquoi ? Suivre la latence, l'erreur et le débit de chaque service.
 
-📦 Architecture à trois couches (DAO / Service / Présentation)
+Avantage : Visualisation fine de l’utilisation, alerting possible, intégration avec prometheus_fastapi_instrumentator.
 
-    Pourquoi ? Séparation claire des responsabilités (accès aux données, logique métier, interface utilisateur).
+## 🧪 pytest
+Pourquoi ? Plus flexible que unittest, riche en plugins.
 
-    Avantage clé : Facilite les tests, la maintenance, et l’évolution vers des architectures plus complexes (ex: API REST, Frontend).
+Avantage : Permet des tests unitaires et d’intégration efficaces, facilement intégrable dans un pipeline CI/CD.
 
-🧪 unittest (module Python standard)
+## ⚙️ GitHub Actions ou GitLab CI
+Pourquoi ? Intégration continue, déploiement automatique possible.
 
-    Pourquoi ? Intégré à Python, facile à configurer, compatible avec les pipelines CI.
-
-    Avantage clé : Permet l’automatisation rapide des tests sans dépendance externe.
-
-🐳 Docker + Docker Compose
-
-    Pourquoi ? Facilite le déploiement, l’isolation de l’environnement, et la portabilité du projet.
-
-    Avantage clé : Une seule commande (docker-compose up) suffit pour lancer toute l’application, peu importe l’environnement hôte.
-
-⚙️ GitHub Actions (CI/CD)
-
-    Pourquoi ? Intégration directe avec GitHub pour automatiser les tests, la construction Docker et les déploiements.
-
-    Avantage clé : Automatisation fiable et gratuite pour projets open source, renforce la qualité du code.
+Avantage : Qualité assurée avant merge, pipeline reproductible et traçable.
 
 
 ## Diagrammes
 
 ### Vue Logique
 
-![diagramme de classe](out/docs/UML/class_diagram/vue_logique.png)
+![diagramme de classe](docs\newUMLS\logique.png)
 
 ### Vue d'implémentation
 
-![diagramme processus](out/docs/UML/implementation/implementation.png)
+![diagramme processus](docs\newUMLS\implementation.png)
 
 ### Vue de deploiement
 
-![diagramme de deploiement](out/docs/UML/deployment/deployment.png)
+![diagramme de deploiement](docs\newUMLS\physique_deploy.png)
 
 ### Vue d'implémentation
 
-![diagramme d'implémentation](out/docs/UML/implementation/implementation.png)
+![diagramme d'implémentation](docs\newUMLS\implementation.png)
 
 ### Vue de cas d'utilisation
 
-![diagramme de cas d'utilisation](out/docs/UML/use_cases/use_cases.)
+![diagramme de cas d'utilisation](docs\newUMLS\cas.png)
 
 ## Diagrammes de séquence (processus)
-
-### Annuler vente
-![diagramme sequence annulation vente](out/docs/UML/sequence_diagrams/annulation_vente/sequence_diagram_annulation.png)
-### Enregistrer vente
-![diagramme sequence enregistrement vente](out/docs/UML/sequence_diagrams/enregistrer_vente/sequence_diagram_vente.png)
-### Reapprovisionnement
-![diagramme sequence restock](out/docs/UML/sequence_diagrams/restock/sequence_diagram_restock.png)
-### Rechercher produit
-![diagramme sequence rechercher](out/docs/UML/sequence_diagrams/recherche_produit/sequence_diagram_recherche.png)
-### Voir stock
-![diagramme sequence consulter stock](out/docs/UML/sequence_diagrams/voir_stock/sequence_diagram_stock.png)
-### Afficher tableau de bord
-![diagramme sequence tableau](out/docs/UML/sequence_diagrams/tableau_de_bord/sequence_diagram_tableau_bord.png)
+![diagramme sequence annulation vente](docs\newUMLS\processus.png)
 
 ## Instruction d'installation et d'execution
 
@@ -267,29 +256,15 @@ Installer un .venv. voir (https://packaging.python.org/en/latest/guides/installi
 ### Installer dépendances
 `pip install -r requirements.txt`
 
-### Docker commands to build (terminal)
-`docker build -t my-app .`
-`docker-compose up`
-`docker run -p 8000:8000 my-app`
-
-### Acceder au endpoints et doc
-`http://localhost:8000/docs`
-
-### Lint le code
-Avec Windows
-`Get-ChildItem -Recurse -Filter *.py -File |`
-    `Where-Object { $_.FullName -notlike "*\.venv\*" -and $_.FullName -notlike "*site-packages*" } |`
-    `ForEach-Object {`
-       ` Write-Host "🔍 Linting $($_.FullName)"`
-        `pylint $_.FullName`
-    `}`
-
-Linux / Mac
-`pylint $(find . -name "*.py")`
+### setup projet(terminal)
+`make build`
+`make init-db`
+`make seed-db`
+`make up`
 
 ### Executer les tests unitaires
 
-Terminal: `pytest`
+Terminal: `make test-` + nom du service
 
 ## Instruction pour l'environnement de production
 
