@@ -1,0 +1,187 @@
+{
+  "version": 3,
+  "name": "API_Gateway",
+  "port": 8080,
+ "extra_config": {
+  "github.com/devopsfaith/krakend-cors": {
+    "allow_origins": ["*"],
+    "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Origin", "Content-Type", "X-API-Key"],
+    "expose_headers": ["Content-Length"],
+    "max_age": "24h",
+    "allow_credentials": false
+  }
+},
+
+  "endpoints": [
+    {
+      "endpoint": "/stock/",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://stock_service:8000"],
+        "url_pattern": "/stock/",
+        "is_collection": true
+      }]
+    },
+    {
+      "endpoint": "/stock/vente",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "backend": [{
+        "host": ["http://stock_service:8000"],
+        "url_pattern": "/stock/vente"
+      }]
+    },
+    {
+      "endpoint": "/stock/annulation",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "backend": [{
+        "host": ["http://stock_service:8000"],
+        "url_pattern": "/stock/annulation"
+      }]
+    },
+    {
+      "endpoint": "/stock/rechercher",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "input_query_strings": ["terme"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://stock_service:8000"],
+        "url_pattern": "/stock/rechercher",
+        "querystring_params": ["terme"],
+        "is_collection": true
+      }]
+    },
+    {
+      "endpoint": "/stock/update/{produit_id}/magasin/{magasin_id}",
+      "method": "PUT",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["produit_id", "magasin_id"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://stock_service:8000"],
+        "url_pattern": "/stock/update/{produit_id}/magasin/{magasin_id}"
+      }]
+    },
+
+    {
+      "endpoint": "/restock/transferer",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "backend": [{
+        "host": ["http://restock_service:8000"],
+        "url_pattern": "/restock/transferer"
+      }]
+    },
+    {
+      "endpoint": "/restock/stock_par_magasin",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["magasin_id"],
+      "backend": [{
+        "host": ["http://restock_service:8000"],
+        "url_pattern": "/restock/stock_par_magasin",
+        "is_collection": true
+      }]
+    },
+
+    {
+      "endpoint": "/reporting/ventes",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://reporting_service:8000"],
+        "url_pattern": "/reporting/ventes",
+        "is_collection": true
+      }]
+    },
+    {
+      "endpoint": "/reporting/ruptures",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://reporting_service:8000"],
+        "url_pattern": "/reporting/ruptures",
+        "is_collection": true
+      }]
+    },
+    {
+      "endpoint": "/reporting/dashboard",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://reporting_service:8000"],
+        "url_pattern": "/reporting/dashboard",
+        "is_collection": true
+      }]
+    },
+
+    {
+      "endpoint": "/clients/",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "backend": [{
+        "host": ["http://customer_service:8000"],
+        "url_pattern": "/clients/"
+      }]
+    },
+    {
+      "endpoint": "/clients/{client_id}",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["client_id"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://customer_service:8000"],
+        "url_pattern": "/clients/{client_id}"
+      }]
+    },
+    {
+      "endpoint": "/panier/",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "backend": [{
+        "host": ["http://cart_service:8000"],
+        "url_pattern": "/panier/"
+      }]
+    },
+    {
+      "endpoint": "/panier/{panier_id}/produit",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["panier_id"],
+      "backend": [{
+        "host": ["http://cart_service:8000"],
+        "url_pattern": "/panier/{panier_id}/produit"
+      }]
+    },
+    {
+      "endpoint": "/panier/panier/{panier_id}",
+      "method": "GET",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["panier_id"],
+      "output_encoding": "json",
+      "backend": [{
+        "host": ["http://cart_service:8000"],
+        "url_pattern": "/panier/panier/{panier_id}"
+      }]
+    },
+    {
+      "endpoint": "/panier/panier/{panier_id}/checkout",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["panier_id"],
+      "backend": [{
+        "host": ["http://cart_service:8000"],
+        "url_pattern": "/panier/panier/{panier_id}/checkout"
+      }]
+    }
+  ]
+}

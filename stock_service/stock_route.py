@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, Query
 from fastapi_cache import FastAPICache
 from api.auth import verify_api_key
 from stock_service import StockService
@@ -51,7 +51,7 @@ def router(service: StockService) -> APIRouter:
         return {"message": "Vente annulée"}
 
     @r.get("/rechercher", summary="🔍 Rechercher un produit", status_code=200, dependencies=[Depends(verify_api_key)])
-    def rechercher(terme: str):
+    def rechercher(terme: str = Query(...)):
         """
         Recherche des produits par un terme dans l'ID, le nom ou la catégorie.
         - **terme**: Terme de recherche (ID, nom ou catégorie)
