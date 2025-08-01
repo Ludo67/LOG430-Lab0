@@ -105,6 +105,7 @@ class CartService:
             except requests.RequestException as e:
                 raise HTTPException(status_code=500, detail=f"Erreur lors de l'enregistrement de la vente pour produit ID {produit.produit_id} : {str(e)}")
 
+            logger.debug(f"Produit vendu: {produit.nom} (ID: {produit.produit_id}, Qte: {produit.quantite}, Prix unitaire: {produit.prix})")
             total += produit.quantite * produit.prix
 
         logger.info(f"Vente complétée pour le panier ID {panier_id}, total: {total:.2f}.")

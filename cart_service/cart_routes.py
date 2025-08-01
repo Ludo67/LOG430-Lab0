@@ -67,6 +67,8 @@ def router(service: CartService) -> APIRouter:
     def get_panier(panier_id: int):
         try:
             panier = service.get_panier(panier_id)
+            if not panier:
+                raise HTTPException(status_code=404, detail="Panier not found")
             return panier
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e))

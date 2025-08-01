@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from shared_data.customer_dao import CustomerDAO
 from customer_service import CustomerService
@@ -57,6 +57,11 @@ def router(service: CustomerService) -> APIRouter:
         ```
         """
         logger.info(f"Récupération du client avec ID: {client_id}")
-        return service.recuperer_client(client_id)
+        client = service.recuperer_client(client_id)
+        if client is None:
+           logger.warning(f"Client ID {client_id} introuvable.")
+           raise HTTPException(status_code=404, detail="Client not found")
+        
+        return Client.from_orm(client)
 
     return r

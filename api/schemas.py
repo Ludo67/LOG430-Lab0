@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class VenteRequest(BaseModel):
@@ -39,8 +39,8 @@ class Client(BaseModel):
     email: str
     adresse: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ProduitSimple(BaseModel):
     id: int
@@ -57,8 +57,7 @@ class ProduitDansPanier(BaseModel):
     prix: float
     quantite: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PanierDetail(BaseModel):
     id: int

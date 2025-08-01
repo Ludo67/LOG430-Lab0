@@ -9,6 +9,47 @@ info:
   version: 1.0.0
 openapi: 3.0.0
 paths:
+  /orchestrateur/commande:
+    post:
+      summary: Créer une commande complète (saga orchestrée)
+      description: |
+        Lance une commande pour un client donné, en suivant une saga orchestrée :
+        1. Création du client
+        2. Création du panier
+        3. Ajout du produit au panier
+        4. Validation (checkout)
+        En cas d’échec à une étape, un rollback est effectué automatiquement.
+      parameters:
+        - in: query
+          name: produit_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: magasin_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: client_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: quantite
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Succès – Commande traitée avec succès.
+        '500':
+          description: Échec – Une erreur est survenue durant la commande (rollback effectué).
+      security:
+        - ApiKeyAuth: []
+      tags:
+        - Orchestrateur
+        
   /clients/:
     post:
       summary: Créer un client

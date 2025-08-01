@@ -95,6 +95,15 @@ services:
     environment:
       - INSTANCE_ID=2
 
+  orchestrator_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    ports:
+      - "8010:8000"
+    depends_on:
+      - stock_service
+      - cart_service_1
 
   krakend:
     image: devopsfaith/krakend
@@ -110,6 +119,7 @@ services:
       - customer_service
       - cart_service_1
       - cart_service_2
+      - orchestrator_service
 
   swagger-ui:
     image: swaggerapi/swagger-ui

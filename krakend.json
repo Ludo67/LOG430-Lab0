@@ -193,7 +193,19 @@
           "url_pattern": "/whoami"
         }
       ]
+    },
+    {
+      "endpoint": "/orchestrateur/commande",
+      "method": "POST",
+      "input_headers": ["X-API-Key"],
+      "input_params": ["produit_id", "magasin_id", "client_id", "quantite"],
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://orchestrator_service:8000"],
+          "url_pattern": "/orchestrateur/commande"
+        }
+      ]
     }
-
   ]
 }
