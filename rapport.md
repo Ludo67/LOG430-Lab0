@@ -245,7 +245,26 @@ Avantage : Qualité assurée avant merge, pipeline reproductible et traçable.
 ## Diagrammes de séquence (processus)
 ![diagramme sequence annulation vente](docs\newUMLS\processus.png)
 
-## Instruction d'installation et d'execution
+# Tests et cas d’échecs simulés
+## Cas de succès
+4 commandes passées avec succès.
+
+Durée moyenne mesurée : ~0.112s.
+
+États finaux atteints : CLIENT_CREE, PANIER_CREE, STOCK_VERIFIE, COMMANDE_CONFIRMEE.
+
+## Cas d’échec simulé : stock insuffisant
+1 test échoue lors de la vérification du stock quand on demande + de quantité que le stock présent.
+
+Mécanismes déclenchés :
+
+Rollback de la commande.
+
+Annulation vente.
+
+État : ECHEC ou CHECKOUT_ECHOUE.
+
+# Instruction d'installation et d'execution
 
 ### Cloner
 Git bash: `git clone https://github.com/Ludo67/LOG430-Lab0.git`
