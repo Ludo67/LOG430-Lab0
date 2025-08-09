@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+title Cas d'utilisation - Système e-commerce
+
+actor Client
+actor Admin
+
+rectangle "Système e-commerce" {
+    usecase "Créer un compte" as UC1
+    usecase "Consulter panier" as UC2
+    usecase "Ajouter au panier" as UC3
+    usecase "Consulter stock" as UC4
+    usecase "Finaliser la commande" as UC5
+    usecase "Voir rapport de vente" as UC6
+    usecase "Générer tableau de bord" as UC7
+    usecase "Voir produit en rupture de stock" as UC8
+}
+
+Client --> UC1
+Client --> UC2
+Client --> UC3
+Client --> UC4
+Client --> UC5
+
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+@enduml

@@ -226,24 +226,22 @@ Avantage : Qualité assurée avant merge, pipeline reproductible et traçable.
 
 ![diagramme de classe](docs\newUMLS\logique.png)
 
-### Vue d'implémentation
+### Vue de processus
 
-![diagramme processus](docs\newUMLS\implementation.png)
+![diagramme processus](docs\newUMLS\processus.png)
 
 ### Vue de deploiement
 
-![diagramme de deploiement](docs\newUMLS\physique_deploy.png)
+![diagramme de deploiement](docs\newUMLS\deployment.png)
 
 ### Vue d'implémentation
 
-![diagramme d'implémentation](docs\newUMLS\implementation.png)
+![diagramme d'implémentation](docs\newUMLS\impl.png)
 
 ### Vue de cas d'utilisation
 
-![diagramme de cas d'utilisation](docs\newUMLS\cas.png)
+![diagramme de cas d'utilisation](docs\newUMLS\case.png)
 
-## Diagrammes de séquence (processus)
-![diagramme sequence annulation vente](docs\newUMLS\processus.png)
 
 # Tests et cas d’échecs simulés
 ## Cas de succès

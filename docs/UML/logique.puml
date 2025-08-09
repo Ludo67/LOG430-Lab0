@@ -1,0 +1,50 @@
+@startuml
+
+package "Customer Service" {
+    [CustomerAPI]
+    [CustomerLogic]
+
+    CustomerAPI --> CustomerLogic
+}
+
+package "Stock Service" {
+    [StockAPI]
+    [StockLogic]
+
+    StockAPI --> StockLogic
+}
+
+package "Restock Service" {
+    [RestockAPI]
+    [RestockLogic]
+
+    RestockAPI --> RestockLogic
+}
+
+package "Reporting Service" {
+    [ReportingAPI]
+    [ReportingLogic]
+
+    ReportingAPI --> ReportingLogic
+}
+
+package "Cart Service" {
+    [CartAPI]
+    [CartLogic]
+    CartAPI --> CartLogic
+}
+
+database "Shared Data" {
+    [CustomerData]
+    [StockData]
+    [RestockData]
+    [ReportingData]
+    [CartData]
+
+    CustomerLogic --> CustomerData
+    StockLogic --> StockData
+    RestockLogic --> RestockData
+    ReportingLogic --> ReportingData
+    CartLogic --> CartData
+}
+@enduml

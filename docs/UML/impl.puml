@@ -1,0 +1,26 @@
+@startuml
+title Project Root
+
+package "Project Root" {
+    [customer_service]
+    [cart_service]
+    [shared_data]
+    [api]
+    [reporting_service]
+    [stock_service]
+    [restock_service]
+    [setup]
+
+    customer_service --> shared_data
+    cart_service --> shared_data
+    reporting_service --> shared_data
+    stock_service --> shared_data
+    restock_service --> shared_data
+    setup --> shared_data
+    api --> customer_service
+    api --> cart_service
+    api --> reporting_service
+    api --> stock_service
+    api --> restock_service
+}
+@enduml

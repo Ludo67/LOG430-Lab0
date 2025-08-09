@@ -1,0 +1,16 @@
+@startuml
+title Authentification et Processus de Commande
+
+actor Utilisateur
+
+participant "Gateway" as Gateway
+participant "Stock Service" as Stock
+participant "Restock Service" as Restock
+participant "Reporting Service" as Reporting
+participant "Customer Service" as Customer
+participant "Cart service" as Cart
+
+Utilisateur -> Gateway : Request
+
+
+@enduml
