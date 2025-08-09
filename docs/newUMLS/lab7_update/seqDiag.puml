@@ -1,0 +1,46 @@
+@startuml
+title Saga chorégraphiée - Création de commande (Lab 7)
+
+actor Utilisateur
+participant "Gateway" as GW
+participant "CustomerService" as CS
+participant "CartService" as CaS
+participant "StockService" as SS
+participant "Event Broker" as EB
+participant "NotificationService" as NS
+
+Utilisateur -> GW : POST /commande
+GW -> CS : CommandeInitiée(cmdId, clientId) (publish)
+CS -> EB : Event(CommandeInitiee)
+EB -> CaS : Event(CommandeInitiee)
+
+CaS -> EB : Event(PanierVerifie, items)
+EB -> SS : Event(PanierVerifie)
+
+SS -> EB : Event(StockReserve, reservations)
+EB -> CS : Event(StockReserve)
+EB -> CaS : Event(StockReserve)
+
+' (optionnel) Paiement si présent dans ton système
+' EB -> Payment : Event(AutorisationDemandee)
+' Payment -> EB : Event(PaiementAutorise)
+
+' Confirmation
+CS -> EB : Event(CommandeConfirmee)
+EB -> NS : Event(CommandeConfirmee)
+NS -> Utilisateur : Notification confirmation
+
+' --- Scénario d’échec : stock insuffisant ---
+... échec possible ...
+SS -> EB : Event(StockInsuffisant)
+EB -> CaS : Event(CompensationRetirerItems)
+EB -> CS : Event(CompensationAnnulerCommande)
+EB -> NS : Event(NotifierEchec)
+
+note over EB
+  Règles de chorégraphie :
+  - Chaque service publie un événement métier après traitement.
+  - Les autres services réagissent via leurs abonnements.
+  - Les compensations sont aussi des événements.
+end note
+@enduml

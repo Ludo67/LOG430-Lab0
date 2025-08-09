@@ -1,0 +1,45 @@
+@startuml
+title Cas d'utilisation - Système e-commerce (Lab 7)
+
+left to right direction
+actor Client
+actor Admin
+
+rectangle "Système e-commerce" {
+  (Créer un compte) as UC_Create
+  (Ajouter au panier) as UC_Add
+  (Consulter panier) as UC_ViewCart
+  (Finaliser la commande) as UC_Checkout
+  (Consulter stock) as UC_Stock
+
+  (Recevoir notification) as UC_Notif
+  (Consulter rapport de vente) as UC_Report
+  (Générer tableau de bord) as UC_Dashboard
+
+  (Consulter projections CQRS) as UC_CQRS
+  (Voir timeline des événements) as UC_Timeline
+  (Rejouer l'état depuis Event Store) as UC_Replay
+  (Voir produits en rupture) as UC_OOS
+}
+
+Client --> UC_Create
+Client --> UC_Add
+Client --> UC_ViewCart
+Client --> UC_Checkout
+Client --> UC_Stock
+
+Admin --> UC_CQRS
+Admin --> UC_Timeline
+Admin --> UC_OOS
+Admin --> UC_Dashboard
+Admin --> UC_Report
+Admin --> UC_Replay
+UC_Checkout --> UC_Notif : <<publié via events>>
+
+legend right
+  Nouvelles capacités Lab7 :
+  - UC_CQRS : lectures via "read models"
+  - UC_Timeline / UC_Replay : Event Sourcing
+  - UC_Notif : abonné Pub/Sub (notification)
+endlegend
+@enduml

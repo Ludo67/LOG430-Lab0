@@ -266,14 +266,6 @@ Installer un .venv. voir (https://packaging.python.org/en/latest/guides/installi
 
 Terminal: `make test-` + nom du service
 
-## Instruction pour l'environnement de production
-
-Dans la machine virtuelle, voici des commandes à utiliser.
-
-### Télécharger la plus nouvelle version sur docker hub
-
-`docker pull ludo678/my-app:latest`
-
 # 📦 CI/CD Pipeline – Description des étapes
 
 Ce pipeline GitHub Actions automatise les étapes de **linting**, **tests**, **build Docker**, et **publication** sur Docker Hub lors d’un `push` ou `pull_request` sur n’importe quelle branche.

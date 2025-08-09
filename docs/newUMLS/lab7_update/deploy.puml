@@ -1,0 +1,83 @@
+@startuml
+title Architecture Déployée - Microservices (Lab 7)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+node "Serveur 1" {
+  [NGINX]
+  [KrakenD (API Gateway)]
+  [Prometheus]
+  [Grafana]
+  [Redis] as RedisCache
+}
+
+cloud "Event Broker\n(Redis Streams / Kafka)" as Broker
+database "Event Store\n(PostgreSQL)" as EventStore
+
+node "Customer Service" as CS {
+  component "Customer API\n(Command)" as CS_API
+  component "Customer Read API\n(Query)" as CS_Q
+  component "Customer Handlers\n(Event Consumer)" as CS_H
+}
+
+node "Cart Service" as CaS {
+  component "Cart API\n(Command)" as CaS_API
+  component "Cart Read API\n(Query)" as CaS_Q
+  component "Cart Handlers\n(Event Consumer)" as CaS_H
+}
+
+' node "Stock Service" as SS {
+'   component "Stock API\n(Command)" as SS_API
+'   component "Stock Read API\n(Query)" as SS_Q
+'   component "Stock Handlers\n(Event Consumer)" as SS_H
+' }
+
+' node "Reporting Service" as RS {
+'   component "Projections CQRS\n(Read Models)" as RS_Proj
+'   component "Reporting API\n(Query)" as RS_API
+'   component "Audit Consumer" as RS_Audit
+' }
+
+node "Notification Service" as NS {
+  component "Notifier (email/console)" as NS_Sub
+}
+
+RedisCache -[hidden]-> Prometheus
+Prometheus --> Grafana
+
+' Gateway & cache
+[NGINX] --> [KrakenD (API Gateway)]
+[KrakenD (API Gateway)] --> CS_API
+[KrakenD (API Gateway)] --> CaS_API
+' [KrakenD (API Gateway)] --> SS_API
+' [KrakenD (API Gateway)] --> RS_API
+[KrakenD (API Gateway)] ..> RedisCache : cache lecture (optionnel)
+
+' Pub/Sub wiring
+CS_API --> Broker : publish events
+CaS_API --> Broker : publish events
+' SS_API --> Broker : publish events
+
+CS_H --> Broker : subscribe
+CaS_H --> Broker : subscribe
+' SS_H --> Broker : subscribe
+' RS_Audit --> Broker : subscribe
+NS_Sub --> Broker : subscribe
+
+' Event Store
+Broker --> EventStore : append events
+' RS_Proj --> EventStore : replay / projections
+' RS_API --> RS_Proj
+
+' Metrics
+CS_API --> Prometheus : /metrics
+CaS_API --> Prometheus
+' SS_API --> Prometheus
+' RS_API --> Prometheus
+NS_Sub --> Prometheus
+
+note bottom
+  Lab7 : pas d’orchestrateur. Coordination par événements (saga chorégraphiée).
+end note
+@enduml

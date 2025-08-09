@@ -1,0 +1,43 @@
+@startuml
+title Project Root (Lab 7)
+
+package "project-root" {
+  [api] 
+  [customer_service]
+  [cart_service]
+  [stock_service]
+  [reporting_service]
+  [notification_service]
+  [shared_data]
+  [event_bus] 
+  [event_store]
+  [read_models] 
+  [observability] 
+
+  api --> customer_service
+  api --> cart_service
+  api --> stock_service
+  api --> reporting_service
+
+  customer_service --> event_bus
+  cart_service --> event_bus
+  stock_service --> event_bus
+  reporting_service --> read_models
+  reporting_service --> event_store
+  notification_service --> event_bus
+
+  event_bus --> event_store
+  read_models --> event_store : replay/projections
+
+  customer_service --> shared_data
+  cart_service --> shared_data
+  stock_service --> shared_data
+  reporting_service --> shared_data
+
+  customer_service --> observability
+  cart_service --> observability
+  stock_service --> observability
+  reporting_service --> observability
+  notification_service --> observability
+}
+@enduml

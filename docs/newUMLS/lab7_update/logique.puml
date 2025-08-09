@@ -1,0 +1,59 @@
+@startuml
+title Vue logique - Services & CQRS (Lab 7)
+
+skinparam rectangle {
+  BorderColor #777
+}
+
+rectangle "Customer Service" {
+  rectangle "Command Side\n(CustomerAPI + Domain)" as C_CMD
+  rectangle "Event Publisher" as C_PUB
+  rectangle "Handlers (Consumers)" as C_CONS
+  rectangle "Query Side\n(CustomerReadAPI)" as C_Q
+}
+
+rectangle "Cart Service" {
+  rectangle "Command Side\n(CartAPI + Domain)" as K_CMD
+  rectangle "Event Publisher" as K_PUB
+  rectangle "Handlers (Consumers)" as K_CONS
+  rectangle "Query Side\n(CartReadAPI)" as K_Q
+}
+
+rectangle "Stock Service" {
+  rectangle "Command Side\n(StockAPI + Domain)" as S_CMD
+  rectangle "Event Publisher" as S_PUB
+  rectangle "Handlers (Consumers)" as S_CONS
+  rectangle "Query Side\n(StockReadAPI)" as S_Q
+}
+
+rectangle "Reporting Service" {
+  rectangle "Projections\n(Read Models)" as R_PROJ
+  rectangle "ReportingAPI\n(Query)" as R_Q
+  rectangle "Audit Consumer" as R_CONS
+}
+
+cloud "Event Broker\n(Redis Streams/Kafka)" as BROKER
+database "Event Store" as ES
+
+C_CMD --> C_PUB
+K_CMD --> K_PUB
+S_CMD --> S_PUB
+
+C_PUB --> BROKER
+K_PUB --> BROKER
+S_PUB --> BROKER
+
+C_CONS --> BROKER
+K_CONS --> BROKER
+S_CONS --> BROKER
+R_CONS --> BROKER
+
+BROKER --> ES : append
+R_PROJ --> ES : replay -> projections
+R_Q --> R_PROJ
+
+note bottom
+  CQRS : Command (APIs métier) séparé des Query (APIs lecture sur projections).
+  Idempotence côté consommateurs ; logs JSON + métriques exposées.
+end note
+@enduml
